@@ -7,6 +7,10 @@ import NotFound404 from './pages/NotFound404'
 import './App.css'
 import ProtectedRoute from './components/ProtectedRoute'
 import Adminpanel from './pages/Adminpanel'
+import Curriculum from './pages/StudentPages/Curriculum'
+import Scanqr from './pages/StudentPages/Scanqr'
+import Profile from './pages/Profile'
+import MarkAttendance from './pages/TeacherPages/MarkAttendance'
 
 
 const Logout = () => {
@@ -24,6 +28,11 @@ const App = () => {
       <Route path='*' element={<NotFound404/>}/>
       <Route path='/logout' element={<Logout/>}/>
       <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><Adminpanel /></ProtectedRoute>}/>
+      <Route path="/curriculum" element={<ProtectedRoute allowedRoles={["student"]}><Curriculum/></ProtectedRoute>}/>
+      <Route path="/scanqr" element={<ProtectedRoute allowedRoles={["student"]}><Scanqr/></ProtectedRoute>}/>
+      <Route path="/profile" element={<ProtectedRoute allowedRoles={["student"]}><Profile/></ProtectedRoute>}/>
+      <Route path="/teacherprofile" element={<ProtectedRoute allowedRoles={["teacher"]}><Profile /></ProtectedRoute>}/>
+      <Route path="/teacherhome" element={<ProtectedRoute allowedRoles={["teacher"]}><MarkAttendance /></ProtectedRoute>}/>
     </Routes>
     </BrowserRouter>
     </>

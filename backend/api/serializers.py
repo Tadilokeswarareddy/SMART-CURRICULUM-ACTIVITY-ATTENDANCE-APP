@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import UserModel
+from .models import UserModel,StudentModel,TeacherModel
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 class UserModelSerializers(serializers.ModelSerializer):
@@ -23,3 +23,13 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         data = super().validate(attrs)
         data['role'] = self.user.role
         return data
+    
+class StudentModelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StudentModel
+        fields = '__all__'
+
+class TeacherModelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TeacherModel
+        fields = '__all__'
