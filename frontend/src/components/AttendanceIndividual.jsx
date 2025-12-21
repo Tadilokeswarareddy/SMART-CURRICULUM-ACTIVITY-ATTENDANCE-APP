@@ -23,7 +23,6 @@ const AttendanceIndividual = ({
               viewBox="0 0 36 36"
               xmlns="http://www.w3.org/2000/svg"
             >
-
               <circle
                 cx="18"
                 cy="18"

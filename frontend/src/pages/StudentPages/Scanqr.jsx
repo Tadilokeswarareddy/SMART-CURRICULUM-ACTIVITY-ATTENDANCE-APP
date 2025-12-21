@@ -1,8 +1,11 @@
 import React from 'react'
+import StudentNav from '../../components/StudentNav'
 
 const Scanqr = () => {
   return (
-    <div>Scanqr</div>
+    <>
+    <StudentNav/>
+    </>
   )
 }
 

@@ -1,9 +1,9 @@
 import React from 'react'
 import {Link} from 'react-router-dom'
-const StudentNav = () => {
+const TeacherNav = () => {
   return (
   <div className="flex items-center justify-between w-full px-10 mt-6 ">
-        <Link to="/studenthome">
+        <Link to="/teacherhome">
           <h1
             className="text-2xl font-bold cursor-pointer]"
             style={{ color: "#111725" }}
@@ -14,22 +14,22 @@ const StudentNav = () => {
 
         <nav className="flex items-center gap-16 bg-white shadow-md border rounded-3xl px-10 h-14">
           <Link
-            to="/studenthome"
+            to="/teacherhome"
             className="text-blue-600 font-semibold hover:text-[#111725] transition"
           >
             HOME
           </Link>
           <Link
-            to="/scanqr"
+            to="/markattendance"
             className="text-blue-600 font-semibold hover:text-[#111725] transition"
           >
-            SCAN QR
+            MARK ATTENDANCE
           </Link>
           <Link
             to="/curriculum"
             className="text-blue-600 font-semibold hover:text-[#111725] transition"
           >
-            CURRICULUM
+            TIME TABLE
           </Link>
           <Link
             to="/studentprofile"
@@ -50,4 +50,4 @@ const StudentNav = () => {
   )
 }
 
-export default StudentNav
+export default TeacherNav

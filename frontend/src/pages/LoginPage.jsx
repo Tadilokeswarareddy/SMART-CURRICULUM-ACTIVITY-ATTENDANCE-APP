@@ -8,6 +8,7 @@ const LoginPage = () => {
   const navigate = useNavigate()
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
+  const [error,Seterror]=useState('')
 
   const SendRequest =async(e) => {
     e.preventDefault()
@@ -34,7 +35,8 @@ const LoginPage = () => {
 
     }
     catch(error){
-      console.log(error)
+      Seterror(error)
+      
 
     }
   }
@@ -44,6 +46,7 @@ const LoginPage = () => {
         <h1 className="text-center text-2xl font-bold mb-4">Login</h1>
         <input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full p-2 rounded-md bg-white text-black border border-black "/>
         <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full p-2 rounded-md bg-white text-black border border-black"/>
+        <h1 className='text-white'>{error}</h1>
         <button type="submit" className="w-full p-2 rounded-md bg-white text-black border border-white font-semibold">Submit</button>
         
       </form>
