@@ -1,7 +1,6 @@
 from rest_framework import serializers
-from .models import UserModel,StudentModel,TeacherModel,Course,Subject
+from .models import UserModel
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from .models import ClassGroup,Enrollment,TimeTableSlot
 class UserModelSerializers(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     class Meta:
@@ -23,41 +22,4 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         data = super().validate(attrs)
         data['role'] = self.user.role
         return data
-    
-class StudentModelSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = StudentModel
-        fields = '__all__'
-
-class TeacherModelSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = TeacherModel
-        fields = '__all__'
-
-
-
-class CourseSerilaizer(serializers.ModelSerializer):
-    class Meta:
-        model = Course
-        fields = '__all__'
-
-class SubjectSerilaizer(serializers.ModelSerializer):
-    class Meta:
-        model = Subject
-        fields = '__all__'
-
-class ClassGroupSerilaizer(serializers.ModelSerializer):
-    class Meta:
-        model = ClassGroup
-        fields = '__all__'
-
-class EnrollmentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Enrollment
-        fields = '__all__'
-
-class TimetableSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = TimeTableSlot
-        fields = '__all__'
     

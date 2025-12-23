@@ -63,6 +63,9 @@ INSTALLED_APPS = [
     'app_messages',
     'rest_framework_simplejwt',
     "corsheaders",
+    'student',
+    'teacher',
+    
 
 
 
