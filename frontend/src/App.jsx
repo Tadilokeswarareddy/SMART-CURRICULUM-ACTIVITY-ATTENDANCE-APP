@@ -13,6 +13,7 @@ import MarkAttendance from './pages/TeacherPages/MarkAttendance'
 import StudentProfile from './pages/StudentPages/StudentProfile'
 import TeacherProfile from './pages/TeacherPages/TeacherProfile'
 import TeacherMessagesMain from './pages/TeacherPages/TeacherMessagesMain'
+import Messagesend from './pages/Admin/Messagesend'
 
 
 const Logout = () => {
@@ -38,6 +39,7 @@ const App = () => {
       <Route path="/teacherhome" element={<ProtectedRoute allowedRoles={["teacher"]}><MarkAttendance /></ProtectedRoute>}/>
       <Route path="/teachermessages" element={<ProtectedRoute allowedRoles={["teacher"]}><TeacherMessagesMain /></ProtectedRoute>}/>
       <Route path="/markattendance" element={<ProtectedRoute allowedRoles={["teacher"]}><MarkAttendance /></ProtectedRoute>}/>
+      <Route path='/sendmessages' element={<Messagesend/>}/>
     </Routes>
     </BrowserRouter>
     </>

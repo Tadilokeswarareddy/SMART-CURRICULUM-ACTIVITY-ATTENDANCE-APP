@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     "corsheaders",
     'student',
     'teacher',
+    'django_extensions',
     
 
 

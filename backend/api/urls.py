@@ -13,4 +13,5 @@ urlpatterns = [
     path('',include('app_messages.urls')),
     path('',include('student.urls')),
     path('',include('teacher.urls')),
+
 ]
