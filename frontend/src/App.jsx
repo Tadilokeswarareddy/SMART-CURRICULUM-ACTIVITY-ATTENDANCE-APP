@@ -6,14 +6,14 @@ import StudentHome from './pages/StudentHome'
 import TeacherHome from './pages/TeacherHome'
 import NotFound404 from './pages/NotFound404'
 import ProtectedRoute from './components/ProtectedRoute'
-import Adminpanel from './pages/Adminpanel'
+//import Adminpanel from './pages/Adminpanel'
 import Curriculum from './pages/StudentPages/Curriculum'
 import Scanqr from './pages/StudentPages/Scanqr'
 import MarkAttendance from './pages/TeacherPages/MarkAttendance'
 import StudentProfile from './pages/StudentPages/StudentProfile'
 import TeacherProfile from './pages/TeacherPages/TeacherProfile'
 import TeacherMessagesMain from './pages/TeacherPages/TeacherMessagesMain'
-import Messagesend from './pages/Admin/Messagesend'
+//import Messagesend from './pages/Admin/Messagesend'
 
 
 const Logout = () => {
@@ -22,7 +22,7 @@ const Logout = () => {
 };
 
 const App = () => {
-  return (
+  return ( 
     <>
     <BrowserRouter>
     <Routes>
@@ -31,7 +31,7 @@ const App = () => {
       <Route path="/teacherhome" element={<ProtectedRoute allowedRoles={["teacher"]}><TeacherHome /></ProtectedRoute>}/>
       <Route path='*' element={<NotFound404/>}/>
       <Route path='/logout' element={<Logout/>}/>
-      <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><Adminpanel /></ProtectedRoute>}/>
+    {/* <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><Adminpanel /></ProtectedRoute>}/> */}
       <Route path="/curriculum" element={<ProtectedRoute allowedRoles={["student"]}><Curriculum/></ProtectedRoute>}/>
       <Route path="/scanqr" element={<ProtectedRoute allowedRoles={["student"]}><Scanqr/></ProtectedRoute>}/>
       <Route path="/studentprofile" element={<ProtectedRoute allowedRoles={["student"]}><StudentProfile/></ProtectedRoute>}/>
@@ -39,7 +39,7 @@ const App = () => {
       <Route path="/teacherhome" element={<ProtectedRoute allowedRoles={["teacher"]}><MarkAttendance /></ProtectedRoute>}/>
       <Route path="/teachermessages" element={<ProtectedRoute allowedRoles={["teacher"]}><TeacherMessagesMain /></ProtectedRoute>}/>
       <Route path="/markattendance" element={<ProtectedRoute allowedRoles={["teacher"]}><MarkAttendance /></ProtectedRoute>}/>
-      <Route path='/sendmessages' element={<Messagesend/>}/>
+      {/* <Route path='/sendmessages' element={<Messagesend/>}/> */}
     </Routes>
     </BrowserRouter>
     </>
