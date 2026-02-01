@@ -26,13 +26,13 @@ const TeacherNav = () => {
             MARK ATTENDANCE
           </Link>
           <Link
-            to="/curriculum"
+            to="/teachertimetable"
             className="text-blue-600 font-semibold hover:text-[#111725] transition"
           >
             TIME TABLE
           </Link>
           <Link
-            to="/studentprofile"
+            to="/teacherprofile"
             className="text-blue-600 font-semibold hover:text-[#111725] transition"
           >
             PROFILE

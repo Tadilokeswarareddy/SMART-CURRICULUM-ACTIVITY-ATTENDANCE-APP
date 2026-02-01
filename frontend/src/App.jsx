@@ -14,8 +14,8 @@ import StudentProfile from './pages/StudentPages/StudentProfile'
 import TeacherProfile from './pages/TeacherPages/TeacherProfile'
 import TeacherMessagesMain from './pages/TeacherPages/TeacherMessagesMain'
 //import Messagesend from './pages/Admin/Messagesend'
-
-
+import TeacherTimetable from './pages/TeacherPages/TeacherTimetable'
+import StudentTimetable from './pages/StudentPages/StudentTimetable'
 const Logout = () => {
   localStorage.clear();
   return <Navigate to="/login" />;
@@ -31,15 +31,16 @@ const App = () => {
       <Route path="/teacherhome" element={<ProtectedRoute allowedRoles={["teacher"]}><TeacherHome /></ProtectedRoute>}/>
       <Route path='*' element={<NotFound404/>}/>
       <Route path='/logout' element={<Logout/>}/>
-    {/* <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><Adminpanel /></ProtectedRoute>}/> */}
       <Route path="/curriculum" element={<ProtectedRoute allowedRoles={["student"]}><Curriculum/></ProtectedRoute>}/>
       <Route path="/scanqr" element={<ProtectedRoute allowedRoles={["student"]}><Scanqr/></ProtectedRoute>}/>
       <Route path="/studentprofile" element={<ProtectedRoute allowedRoles={["student"]}><StudentProfile/></ProtectedRoute>}/>
+      <Route path="/studenttimetable" element={<ProtectedRoute allowedRoles={["student"]}><StudentTimetable/></ProtectedRoute>}/>
       <Route path="/teacherprofile" element={<ProtectedRoute allowedRoles={["teacher"]}><TeacherProfile /></ProtectedRoute>}/>
       <Route path="/teacherhome" element={<ProtectedRoute allowedRoles={["teacher"]}><MarkAttendance /></ProtectedRoute>}/>
       <Route path="/teachermessages" element={<ProtectedRoute allowedRoles={["teacher"]}><TeacherMessagesMain /></ProtectedRoute>}/>
       <Route path="/markattendance" element={<ProtectedRoute allowedRoles={["teacher"]}><MarkAttendance /></ProtectedRoute>}/>
-      {/* <Route path='/sendmessages' element={<Messagesend/>}/> */}
+      <Route path="/teachertimetable" element={<ProtectedRoute allowedRoles={["teacher"]}><TeacherTimetable /></ProtectedRoute>}/>
+
     </Routes>
     </BrowserRouter>
     </>

@@ -20,6 +20,12 @@ const StudentNav = () => {
             HOME
           </Link>
           <Link
+            to="/studenttimetable"
+            className="text-blue-600 font-semibold hover:text-[#111725] transition"
+          >
+            TIME TABLE
+          </Link>
+          <Link
             to="/scanqr"
             className="text-blue-600 font-semibold hover:text-[#111725] transition"
           >
