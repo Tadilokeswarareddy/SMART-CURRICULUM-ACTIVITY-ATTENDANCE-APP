@@ -8,6 +8,8 @@ urlpatterns=[
     path("task/generate/", generate_task),
     path("task/complete/", complete_task),
     path('attendance/', StudentAttendanceView.as_view()),
+
+
     
 
     

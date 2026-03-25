@@ -13,10 +13,6 @@ from api.models import Attendance
 from .serializers import StudentAttendanceSummarySerializer
 
 
-
-# views.py
-
-
 class StudentModelView(generics.ListCreateAPIView):
     queryset = StudentModel.objects.all()
     serializer_class = StudentSerializer
@@ -89,43 +85,50 @@ class StudentAttendanceView(APIView):
 
 
 #llm
+# views.py
+
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def generate_task(request):
-    print(f"--- Request received from {request.user} ---")
-    
-    existing = SmartTask.objects.filter(
+    # 1. Check for ANY incomplete tasks
+    existing_tasks = SmartTask.objects.filter(
         student=request.user,
         completed=False
-    ).first()
+    )
 
-    if existing:
-        print(f"✅ Found existing task ID {existing.id}, skipping Gemini call.")
-        return Response({
-            "id": existing.id,
-            "title": existing.title,
-            "description": existing.description,
-            "duration": existing.duration
+    # 2. If there are still tasks to do, return them
+    if existing_tasks.exists():
+        print(f"✅ Found {existing_tasks.count()} existing tasks, skipping Gemini call.")
+        return Response([
+            {
+                "id": task.id,
+                "title": task.title,
+                "description": task.description,
+                "duration": task.duration
+            } for task in existing_tasks
+        ])
+
+    # 3. If no tasks left, generate 5 new ones
+    print("🔍 No tasks found. Requesting 5 new tasks from Gemini...")
+    data_list = generate_task_from_llm() # This now returns a list
+
+    created_tasks = []
+    # Take only the first 5 in case LLM generates more
+    for item in data_list[:5]:
+        task = SmartTask.objects.create(
+            student=request.user,
+            title=item["title"],
+            description=item["description"],
+            duration=item["duration"]
+        )
+        created_tasks.append({
+            "id": task.id,
+            "title": task.title,
+            "description": task.description,
+            "duration": task.duration
         })
 
-    print("🔍 No existing task found. Proceeding to Gemini...")
-    data = generate_task_from_llm()
-    
-
-
-    task = SmartTask.objects.create(
-        student=request.user,
-        title=data["title"],
-        description=data["description"],
-        duration=data["duration"]
-    )
-    return Response({
-        "id": task.id,
-        "title": task.title,
-        "description": task.description,
-        "duration": task.duration
-    })
-
+    return Response(created_tasks)
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def complete_task(request):

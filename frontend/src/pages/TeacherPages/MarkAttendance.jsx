@@ -2,173 +2,101 @@ import React, { useEffect, useState } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 import TeacherNav from "../../components/TeacherNav";
 
-const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
-
-const timeSlots = [
-  "09:00 - 10:00",
-  "10:00 - 11:00",
-  "11:15 - 12:15",
-  "01:00 - 02:00",
-];
-
-const classes = [
-  { id: 1, name: "CSE - A" },
-  { id: 2, name: "CSE - B" },
-  { id: 3, name: "IT - A" },
-];
-
 const MarkAttendance = () => {
-  const [day, setDay] = useState("");
-  const [time, setTime] = useState("");
-  const [selectedClass, setSelectedClass] = useState(null);
-
+  const [assignmentId, setAssignmentId] = useState("");
   const [qrValue, setQrValue] = useState("");
-  const [counter, setCounter] = useState(10);
+  const [counter, setCounter] = useState(300);
   const [isActive, setIsActive] = useState(false);
 
   useEffect(() => {
     if (!isActive) return;
 
-    generateQR();
-
-    const qrInterval = setInterval(() => {
-      generateQR();
-      setCounter(10);
-    }, 10000);
+    startAttendance();
 
     const countdown = setInterval(() => {
-      setCounter((prev) => (prev > 1 ? prev - 1 : 10));
+      setCounter((prev) => (prev > 1 ? prev - 1 : 0));
     }, 1000);
 
-    return () => {
-      clearInterval(qrInterval);
-      clearInterval(countdown);
-    };
+    return () => clearInterval(countdown);
   }, [isActive]);
 
-  const generateQR = () => {
-    const payload = {
-      day,
-      time,
-      classId: selectedClass.id,
-      generatedAt: Date.now(),
-      nonce: Math.random().toString(36).substring(2, 8),
-    };
+  const startAttendance = async () => {
+    try {
+      const res = await fetch(
+        "http://127.0.0.1:8000/api/attendance/start/",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("access")}`,
+          },
+          body: JSON.stringify({
+            assignment_id: assignmentId,
+          }),
+        }
+      );
 
-    setQrValue(JSON.stringify(payload));
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Failed to start attendance");
+        return;
+      }
+
+      setQrValue(data.qr_token);
+      setCounter(300);
+    } catch (err) {
+      console.error("Attendance start error:", err);
+    }
   };
-
-  const canStart =
-    day && time && selectedClass && !isActive;
 
   return (
     <>
       <TeacherNav />
 
-      <div className="flex min-h-[calc(100vh-80px)] bg-gray-100 border-1 mt-5">
-        
-        {/* LEFT PANEL */}
-        <div className="w-1/3 bg-white p-6 border-r">
-          <h2 className="text-xl font-semibold mb-6">
-            Attendance Setup
-          </h2>
+      <div className="min-h-[calc(100vh-80px)] flex flex-col items-center justify-center bg-gray-100">
+        {!isActive ? (
+          <div className="bg-white p-6 rounded shadow w-80">
+            <h2 className="text-lg font-semibold mb-4">
+              Start Attendance
+            </h2>
 
-          {/* Day */}
-          <label className="block mb-2 text-sm font-medium">
-            Select Day
-          </label>
-          <select
-            value={day}
-            onChange={(e) => setDay(e.target.value)}
-            className="w-full mb-4 p-2 border rounded"
-          >
-            <option value="">-- Choose Day --</option>
-            {days.map((d) => (
-              <option key={d}>{d}</option>
-            ))}
-          </select>
+            <input
+              type="number"
+              placeholder="Teaching Assignment ID"
+              value={assignmentId}
+              onChange={(e) => setAssignmentId(e.target.value)}
+              className="w-full border p-2 rounded mb-4"
+            />
 
-          {/* Time */}
-          <label className="block mb-2 text-sm font-medium">
-            Select Time Slot
-          </label>
-          <select
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-            className="w-full mb-4 p-2 border rounded"
-          >
-            <option value="">-- Choose Time --</option>
-            {timeSlots.map((t) => (
-              <option key={t}>{t}</option>
-            ))}
-          </select>
-
-          {/* Class */}
-          <label className="block mb-2 text-sm font-medium">
-            Select Section
-          </label>
-          {classes.map((cls) => (
             <button
-              key={cls.id}
-              onClick={() => setSelectedClass(cls)}
-              className={`w-full text-left px-4 py-2 mb-2 rounded
-                ${
-                  selectedClass?.id === cls.id
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-100 hover:bg-gray-200"
-                }`}
-            >
-              {cls.name}
-            </button>
-          ))}
-
-          {/* Start / Stop */}
-          {!isActive ? (
-            <button
-              disabled={!canStart}
+              disabled={!assignmentId}
               onClick={() => setIsActive(true)}
-              className={`w-full mt-6 py-2 rounded text-white
-                ${
-                  canStart
-                    ? "bg-green-600 hover:bg-green-700"
-                    : "bg-gray-400 cursor-not-allowed"
-                }`}
+              className="w-full bg-green-600 text-white py-2 rounded"
             >
               Start Attendance
             </button>
-          ) : (
+          </div>
+        ) : (
+          <div className="bg-white p-8 rounded shadow text-center">
+            <h3 className="text-lg font-semibold mb-3">
+              Scan to Mark Attendance
+            </h3>
+
+            <QRCodeCanvas value={qrValue} size={260} />
+
+            <p className="mt-4 text-sm text-gray-600">
+              Expires in <b>{counter}s</b>
+            </p>
+
             <button
               onClick={() => setIsActive(false)}
-              className="w-full mt-6 py-2 rounded bg-red-600 text-white hover:bg-red-700"
+              className="mt-4 px-4 py-2 bg-red-600 text-white rounded"
             >
               Stop Attendance
             </button>
-          )}
-        </div>
-
-        {/* RIGHT PANEL */}
-        <div className="w-2/3 flex items-center justify-center">
-          {!isActive ? (
-            <p className="text-gray-500 text-lg">
-              Attendance not started
-            </p>
-          ) : (
-            <div className="bg-white p-8 rounded-xl shadow-lg text-center">
-              <h3 className="text-lg font-semibold mb-1">
-                {selectedClass.name}
-              </h3>
-              <p className="text-sm text-gray-500 mb-4">
-                {day} · {time}
-              </p>
-
-              <QRCodeCanvas value={qrValue} size={280} />
-
-              <p className="mt-4 text-sm text-gray-600">
-                QR refreshes in <b>{counter}s</b>
-              </p>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </>
   );

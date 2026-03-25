@@ -95,12 +95,14 @@ class TimeTable(models.Model):
 class AttendanceSession(models.Model):
     assignment = models.ForeignKey(TeachingAssignment, on_delete=models.CASCADE)
     date = models.DateField(default=timezone.now)
-    start_time = models.TimeField()
+    start_time = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
     is_active = models.BooleanField(default=True)
     qr_token = models.UUIDField(default=uuid.uuid4, unique=True)
 
-    def __str__(self):
-        return f"{self.assignment} - {self.date}"
+    def is_expired(self):
+        return timezone.now() > self.expires_at
+
 
 class Attendance(models.Model):
     student = models.ForeignKey('student.StudentModel', on_delete=models.CASCADE)

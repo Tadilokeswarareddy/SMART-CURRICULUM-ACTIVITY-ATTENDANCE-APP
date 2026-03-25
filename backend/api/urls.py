@@ -3,7 +3,7 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 from django.urls import path,include
-from .views import UserRegisterView,MyTokenObtainPairView
+from .views import UserRegisterView,MyTokenObtainPairView,StartAttendanceSession,MarkAttendanceAPIView
 
 urlpatterns = [
     
@@ -13,5 +13,7 @@ urlpatterns = [
     path('',include('app_messages.urls')),
     path('',include('student.urls')),
     path('',include('teacher.urls')),
+    path("attendance/start/", StartAttendanceSession.as_view()),
+    path("attendance/mark/", MarkAttendanceAPIView.as_view()),
 
 ]

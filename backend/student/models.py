@@ -2,7 +2,7 @@ from django.db import models
 from api.models import UserModel
 from django.conf import settings
 
-# Create your models here.
+
 class StudentModel(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
@@ -26,4 +26,5 @@ class SmartTask(models.Model):
 
     def __str__(self):
         return self.title
+
 

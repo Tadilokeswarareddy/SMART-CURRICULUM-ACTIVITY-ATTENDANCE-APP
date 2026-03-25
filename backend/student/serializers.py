@@ -1,11 +1,6 @@
 from rest_framework import serializers
 from student.models import StudentModel
 from api.models import UserModel
-
-
-
-
-
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserModel
