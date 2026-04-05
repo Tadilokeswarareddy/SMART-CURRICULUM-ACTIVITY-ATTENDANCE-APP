@@ -1,21 +1,23 @@
 from rest_framework import serializers
 from api.models import (
-    UserModel,
-    Branch, Year, Section, Subject,
+    UserModel, Branch, Year, Section, Subject,
     TeachingAssignment, TimeTable,
     AttendanceSession, Attendance
 )
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
+
 class UserModelSerializers(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
+
     class Meta:
         model = UserModel
-        fields = ['username','password','first_name','last_name','role','email']
+        fields = ['username', 'password', 'first_name', 'last_name', 'role', 'email']
 
     def create(self, validated_data):
         user = UserModel.objects.create_user(**validated_data)
         return user
+
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
@@ -29,15 +31,18 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         data['role'] = self.user.role
         return data
 
+
 class BranchSerializer(serializers.ModelSerializer):
     class Meta:
         model = Branch
-        fields = ['name']
+        fields = ['id', 'name']
+
 
 class YearSerializer(serializers.ModelSerializer):
     class Meta:
         model = Year
         fields = ['id', 'year']
+
 
 class SectionSerializer(serializers.ModelSerializer):
     branch = BranchSerializer(read_only=True)
@@ -47,13 +52,20 @@ class SectionSerializer(serializers.ModelSerializer):
         model = Section
         fields = ['id', 'branch', 'year', 'name']
 
+
 class SubjectSerializer(serializers.ModelSerializer):
     branch = BranchSerializer(read_only=True)
     year = YearSerializer(read_only=True)
 
     class Meta:
         model = Subject
-        fields = ['id', 'name', 'code', 'branch', 'year']
+        # NEW: added syllabus fields
+        fields = [
+            'id', 'name', 'code',
+            'branch', 'year',
+            'syllabus_pdf', 'syllabus_description'
+        ]
+
 
 class TeachingAssignmentSerializer(serializers.ModelSerializer):
     teacher = serializers.StringRelatedField()
@@ -64,6 +76,7 @@ class TeachingAssignmentSerializer(serializers.ModelSerializer):
         model = TeachingAssignment
         fields = ['id', 'teacher', 'subject', 'section']
 
+
 class TimeTableSerializer(serializers.ModelSerializer):
     assignment = TeachingAssignmentSerializer(read_only=True)
 
@@ -71,15 +84,14 @@ class TimeTableSerializer(serializers.ModelSerializer):
         model = TimeTable
         fields = ['id', 'assignment', 'day', 'start_time', 'end_time']
 
+
 class AttendanceSessionSerializer(serializers.ModelSerializer):
     assignment = TeachingAssignmentSerializer(read_only=True)
 
     class Meta:
         model = AttendanceSession
-        fields = [
-            'id', 'assignment', 'date',
-            'start_time', 'is_active', 'qr_token'
-        ]
+        fields = ['id', 'assignment', 'date', 'start_time', 'is_active', 'qr_token']
+
 
 class AttendanceSerializer(serializers.ModelSerializer):
     student = serializers.StringRelatedField()
@@ -88,4 +100,3 @@ class AttendanceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Attendance
         fields = ['id', 'student', 'session', 'status', 'marked_at']
-

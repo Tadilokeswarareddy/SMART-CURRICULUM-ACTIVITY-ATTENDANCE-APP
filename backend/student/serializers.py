@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from student.models import StudentModel
 from api.models import UserModel
+
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserModel
@@ -12,13 +14,24 @@ class StudentSerializer(serializers.ModelSerializer):
         queryset=UserModel.objects.filter(role='student'),
         required=False
     )
+    full_name = serializers.SerializerMethodField()
+    email = serializers.SerializerMethodField()
 
     class Meta:
         model = StudentModel
-        fields = ['id', 'user', 'roll_number', 'phone_number']
+        fields = [
+            'id', 'user', 'full_name', 'email',
+            'roll_number', 'phone_number',
+            'section', 'profile_picture'
+        ]
+
+    def get_full_name(self, obj):
+        return obj.user.get_full_name() or obj.user.username
+
+    def get_email(self, obj):
+        return obj.user.email
 
 
- 
 class StudentAttendanceSummarySerializer(serializers.Serializer):
     subject_name = serializers.CharField()
     subject_code = serializers.CharField()

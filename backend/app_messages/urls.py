@@ -1,10 +1,8 @@
-from django.urls import path    
-from .views import MessageDetailview,MessageView,TeacherMessageView,TeacherMessageDetailview
+from django.urls import path
+from .views import SendMessageView, InboxView, MessageDetailView
 
 urlpatterns = [
-
-    path('messages/',MessageView.as_view()),
-    path('messages/<int:pk>/',MessageDetailview.as_view()),
-    path('teachermessages/',TeacherMessageView.as_view()),
-    path('teachermessages/<int:pk>/',TeacherMessageDetailview.as_view()),
+    path('messages/send/', SendMessageView.as_view()),
+    path('messages/inbox/', InboxView.as_view()),
+    path('messages/<int:pk>/', MessageDetailView.as_view()),
 ]

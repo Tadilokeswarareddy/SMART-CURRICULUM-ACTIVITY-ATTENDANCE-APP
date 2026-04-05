@@ -1,27 +1,22 @@
 from rest_framework import generics
-from .models import StudentModel
-from .serializers import StudentSerializer
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from .models import SmartTask
-from .llm import generate_task_from_llm
 from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+
+from .models import StudentModel, SmartTask
+from .serializers import StudentSerializer, StudentAttendanceSummarySerializer
+from .llm import generate_task_from_llm
 from api.models import Attendance
-from .serializers import StudentAttendanceSummarySerializer
 
 
 class StudentModelView(generics.ListCreateAPIView):
     queryset = StudentModel.objects.all()
     serializer_class = StudentSerializer
+    permission_classes = [IsAuthenticated]  # FIX: block anonymous users entirely
 
     def perform_create(self, serializer):
         user = self.request.user
-        if user.is_anonymous:
-            serializer.save()
-            return
 
         if user.role == 'admin':
             serializer.save()
@@ -31,8 +26,6 @@ class StudentModelView(generics.ListCreateAPIView):
             serializer.save()
 
 
-
-
 class StudentDetailview(generics.RetrieveUpdateDestroyAPIView):
     queryset = StudentModel.objects.all()
     serializer_class = StudentSerializer
@@ -40,10 +33,18 @@ class StudentDetailview(generics.RetrieveUpdateDestroyAPIView):
 
 class StudentAttendanceView(APIView):
     permission_classes = [IsAuthenticated]
-    def get(self, request):
-        student = request.user.student_profile
 
-        attendance_qs = Attendance.objects.filter(student=student)
+    def get(self, request):
+        # FIX: guard against missing student profile (e.g. teacher hits this endpoint)
+        try:
+            student = request.user.student_profile
+        except Exception:
+            return Response({"error": "Student profile not found"}, status=404)
+
+        attendance_qs = Attendance.objects.filter(student=student).select_related(
+            'session__assignment__subject',
+            'session__assignment__teacher'
+        )
 
         summary = {}
 
@@ -51,7 +52,6 @@ class StudentAttendanceView(APIView):
             assignment = record.session.assignment
             subject = assignment.subject
             teacher = assignment.teacher
-
             key = subject.id
 
             if key not in summary:
@@ -73,7 +73,6 @@ class StudentAttendanceView(APIView):
                 (data["present_classes"] / data["total_classes"]) * 100
                 if data["total_classes"] > 0 else 0
             )
-
             result.append({
                 **data,
                 "attendance_percentage": round(percentage, 2)
@@ -83,22 +82,15 @@ class StudentAttendanceView(APIView):
         return Response(serializer.data)
 
 
-
-#llm
-# views.py
-
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def generate_task(request):
-    # 1. Check for ANY incomplete tasks
     existing_tasks = SmartTask.objects.filter(
         student=request.user,
         completed=False
     )
 
-    # 2. If there are still tasks to do, return them
     if existing_tasks.exists():
-        print(f"✅ Found {existing_tasks.count()} existing tasks, skipping Gemini call.")
         return Response([
             {
                 "id": task.id,
@@ -108,12 +100,9 @@ def generate_task(request):
             } for task in existing_tasks
         ])
 
-    # 3. If no tasks left, generate 5 new ones
-    print("🔍 No tasks found. Requesting 5 new tasks from Gemini...")
-    data_list = generate_task_from_llm() # This now returns a list
-
+    data_list = generate_task_from_llm()
     created_tasks = []
-    # Take only the first 5 in case LLM generates more
+
     for item in data_list[:5]:
         task = SmartTask.objects.create(
             student=request.user,
@@ -129,27 +118,20 @@ def generate_task(request):
         })
 
     return Response(created_tasks)
+
+
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def complete_task(request):
     task_id = request.data.get("task_id")
 
     if not task_id:
-        return Response(
-            {"error": "task_id is required"},
-            status=400
-        )
+        return Response({"error": "task_id is required"}, status=400)
 
     try:
-        task = SmartTask.objects.get(
-            id=task_id,
-            student=request.user
-        )
+        task = SmartTask.objects.get(id=task_id, student=request.user)
     except SmartTask.DoesNotExist:
-        return Response(
-            {"error": "Task not found"},
-            status=404
-        )
+        return Response({"error": "Task not found"}, status=404)
 
     task.completed = True
     task.save()

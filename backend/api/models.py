@@ -4,7 +4,6 @@ from django.utils import timezone
 import uuid
 
 
-
 class UserModel(AbstractUser):
     ROLE_CHOICES = [
         ('student', 'Student'),
@@ -48,14 +47,24 @@ class Section(models.Model):
     def __str__(self):
         return f"{self.branch}-{self.year}-{self.name}"
 
+
 class Subject(models.Model):
     name = models.CharField(max_length=100)
     code = models.CharField(max_length=20, unique=True)
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
     year = models.ForeignKey(Year, on_delete=models.CASCADE)
 
+    # NEW: syllabus PDF upload
+    syllabus_pdf = models.FileField(
+        upload_to='syllabus/',
+        null=True,
+        blank=True
+    )
+    syllabus_description = models.TextField(null=True, blank=True)
+
     def __str__(self):
         return self.name
+
 
 class TeachingAssignment(models.Model):
     teacher = models.ForeignKey('teacher.TeacherModel', on_delete=models.CASCADE)
@@ -73,7 +82,6 @@ class TeachingAssignment(models.Model):
     def __str__(self):
         return f"{self.teacher} - {self.subject} - {self.section}"
 
-    
 
 class TimeTable(models.Model):
     DAYS = (
@@ -83,7 +91,6 @@ class TimeTable(models.Model):
         ('thu', 'Thursday'),
         ('fri', 'Friday'),
     )
-
     assignment = models.ForeignKey(TeachingAssignment, on_delete=models.CASCADE)
     day = models.CharField(max_length=10, choices=DAYS)
     start_time = models.TimeField()
@@ -91,7 +98,8 @@ class TimeTable(models.Model):
 
     def __str__(self):
         return f"{self.assignment} - {self.day}"
-    
+
+
 class AttendanceSession(models.Model):
     assignment = models.ForeignKey(TeachingAssignment, on_delete=models.CASCADE)
     date = models.DateField(default=timezone.now)
@@ -102,6 +110,9 @@ class AttendanceSession(models.Model):
 
     def is_expired(self):
         return timezone.now() > self.expires_at
+
+    def __str__(self):
+        return f"Session {self.id} - {self.assignment}"
 
 
 class Attendance(models.Model):
