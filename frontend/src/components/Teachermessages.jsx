@@ -1,19 +1,33 @@
-import React from 'react';
+// ─────────────────────────────────────────────
+//  Teachermessages.jsx
+// ─────────────────────────────────────────────
+import React from "react"
 
-const Teachermessage = ({ title, message }) => {
+const G = {
+  50:"#f0fdf4",100:"#dcfce7",200:"#bbf7d0",300:"#86efac",
+  600:"#16a34a",700:"#15803d",800:"#166534",900:"#14532d",
+}
+
+const Teachermessage = ({ title, message, senderName, senderType, date }) => {
+  const isAdmin = senderType === "admin"
   return (
-    <div className="p-2 bg-white ">
-      <div className="flex justify-between items-start gap-3">
-        <h2 className="text-sm font-semibold text-gray-900 leading-tight">
-          {title}
-        </h2>
+    <div style={{ background:"#fff", borderRadius:12, border:`1.5px solid ${G[100]}`, padding:"14px 16px", marginBottom:10, fontFamily:"'DM Sans',sans-serif" }}>
+      <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:10, marginBottom:6 }}>
+        <h3 style={{ margin:0, fontSize:13, fontWeight:700, color:G[900], lineHeight:1.3 }}>{title}</h3>
+        <span style={{ fontSize:10, fontWeight:700, padding:"3px 10px", borderRadius:999, whiteSpace:"nowrap", flexShrink:0,
+          background: isAdmin ? "#dbeafe" : G[100],
+          color: isAdmin ? "#1d4ed8" : G[700],
+        }}>
+          {isAdmin ? "Admin" : "Teacher"}
+        </span>
       </div>
-      <p className="text-xs text-black mt-0.5">
-        {message}
-      </p>
-      <div className="w-full h-px bg-black my-2"></div>
+      <p style={{ margin:"0 0 10px", fontSize:12, color:"#6b7280", lineHeight:1.5 }}>{message}</p>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+        <span style={{ fontSize:11, color:"#9ca3af" }}>{senderName}</span>
+        <span style={{ fontSize:11, color:"#9ca3af" }}>{date ? new Date(date).toLocaleDateString() : ""}</span>
+      </div>
     </div>
-  );
-};
+  )
+}
 
-export default Teachermessage;
+export default Teachermessage

@@ -1,87 +1,92 @@
 import React, { useState } from "react"
-import { Link } from "react-router-dom"
+import { Link, useLocation } from "react-router-dom"
+
+const G = {
+  50:"#f0fdf4",100:"#dcfce7",200:"#bbf7d0",300:"#86efac",
+  500:"#22c55e",600:"#16a34a",700:"#15803d",800:"#166534",900:"#14532d",
+}
+
+const NAV_LINKS = [
+  { to: "/studenthome",      label: "HOME" },
+  { to: "/studenttimetable", label: "TIME TABLE" },
+  { to: "/scanqr",           label: "SCAN QR" },
+  { to: "/curriculum",       label: "CURRICULUM" },
+  { to: "/studentprofile",   label: "PROFILE" },
+]
 
 const StudentNav = () => {
   const [open, setOpen] = useState(false)
+  const location = useLocation()
 
   return (
-    <header className="w-full bg-[#e6f6ee] ">
-      <div className="flex items-center justify-between px-5 md:px-10 h-16">
-        
-        {/* LOGO */}
-        <Link to="/studenthome">
-          <h1 className="text-2xl font-bold text-green-700">
-            Shusseki
-          </h1>
-        </Link>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap');
+        .sn-link { position:relative; }
+        .sn-link::after { content:''; position:absolute; bottom:-2px; left:0; width:0; height:2px; background:${G[500]}; border-radius:2px; transition:width 0.2s; }
+        .sn-link:hover::after, .sn-link.active::after { width:100%; }
+        .sn-hamburger:hover { background:${G[100]} !important; }
+        .sn-mobile-link:hover { background:${G[50]} !important; }
+      `}</style>
 
-        {/* DESKTOP NAV */}
-        <nav className="hidden md:flex items-center gap-12 bg-white shadow-md border rounded-3xl px-10 h-12">
-          <NavLink to="/studenthome" label="HOME" />
-          <NavLink to="/studenttimetable" label="TIME TABLE" />
-          <NavLink to="/scanqr" label="SCAN QR" />
-          <NavLink to="/curriculum" label="CURRICULUM" />
-          <NavLink to="/studentprofile" label="PROFILE" />
-        </nav>
+      <header style={{ width:"100%", background:"#fff", borderBottom:`1px solid ${G[100]}`, fontFamily:"'DM Sans',sans-serif", position:"sticky", top:0, zIndex:100, boxShadow:"0 1px 8px rgba(21,128,61,0.07)" }}>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 24px", height:64, maxWidth:1200, margin:"0 auto" }}>
 
-        {/* DESKTOP LOGOUT */}
-        <Link
-          to="/logout"
-          className="hidden md:block px-4 py-2 bg-red-600 text-white rounded-md text-sm"
-        >
-          Logout
-        </Link>
+          {/* Logo */}
+          <Link to="/studenthome" style={{ textDecoration:"none" }}>
+            <span style={{ fontSize:22, fontWeight:700, color:G[700], fontFamily:"'DM Serif Display',serif", letterSpacing:"-0.5px" }}>Shusseki</span>
+          </Link>
 
-        {/* MOBILE MENU BUTTON */}
-        <button
-          className="md:hidden text-green-700"
-          onClick={() => setOpen(!open)}
-        >
-          ☰
-        </button>
-      </div>
+          {/* Desktop nav */}
+          <nav style={{ display:"flex", alignItems:"center", gap:0, background:G[50], border:`1.5px solid ${G[100]}`, borderRadius:999, padding:"0 8px", height:44 }}
+            className="hidden-mobile">
+            {NAV_LINKS.map(({ to, label }) => {
+              const active = location.pathname === to
+              return (
+                <Link key={to} to={to} className={`sn-link${active?" active":""}`}
+                  style={{ padding:"0 16px", fontSize:11, fontWeight:700, letterSpacing:"1.5px", color: active ? G[700] : G[600], textDecoration:"none", lineHeight:"44px", transition:"color 0.2s" }}>
+                  {label}
+                </Link>
+              )
+            })}
+          </nav>
 
-      {/* MOBILE MENU */}
-      {open && (
-        <div className="md:hidden bg-white shadow-md border-t">
-          <MobileLink to="/studenthome" label="HOME" setOpen={setOpen} />
-          <MobileLink to="/studenttimetable" label="TIME TABLE" setOpen={setOpen} />
-          <MobileLink to="/scanqr" label="SCAN QR" setOpen={setOpen} />
-          <MobileLink to="/curriculum" label="CURRICULUM" setOpen={setOpen} />
-          <MobileLink to="/studentprofile" label="PROFILE" setOpen={setOpen} />
-
-          <Link
-            to="/logout"
-            onClick={() => setOpen(false)}
-            className="block px-6 py-3 text-red-600 font-semibold"
-          >
+          {/* Desktop logout */}
+          <Link to="/logout" style={{ display:"block", background:"#dc2626", color:"#fff", borderRadius:10, padding:"8px 18px", fontSize:13, fontWeight:600, fontFamily:"'DM Sans',sans-serif", textDecoration:"none" }}
+            className="hidden-mobile">
             Logout
           </Link>
+
+          {/* Mobile hamburger */}
+          <button onClick={() => setOpen(!open)} className="sn-hamburger show-mobile"
+            style={{ background:"none", border:`1.5px solid ${G[200]}`, borderRadius:9, padding:"6px 10px", color:G[700], fontSize:18, cursor:"pointer", lineHeight:1, transition:"background 0.2s" }}>
+            {open ? "✕" : "☰"}
+          </button>
         </div>
-      )}
-    </header>
+
+        {/* Mobile menu */}
+        {open && (
+          <div style={{ background:"#fff", borderTop:`1px solid ${G[100]}`, padding:"8px 0 12px" }}>
+            {NAV_LINKS.map(({ to, label }) => (
+              <Link key={to} to={to} onClick={() => setOpen(false)} className="sn-mobile-link"
+                style={{ display:"block", padding:"12px 24px", fontSize:13, fontWeight:700, letterSpacing:"1.2px", color:G[700], textDecoration:"none", transition:"background 0.15s" }}>
+                {label}
+              </Link>
+            ))}
+            <Link to="/logout" onClick={() => setOpen(false)}
+              style={{ display:"block", padding:"12px 24px", fontSize:13, fontWeight:700, color:"#dc2626", textDecoration:"none" }}>
+              LOGOUT
+            </Link>
+          </div>
+        )}
+      </header>
+
+      <style>{`
+        @media (min-width: 768px) { .hidden-mobile { display: flex !important; } .show-mobile { display: none !important; } }
+        @media (max-width: 767px) { .hidden-mobile { display: none !important; } .show-mobile { display: block !important; } }
+      `}</style>
+    </>
   )
 }
-
-/* Reusable Desktop Link */
-const NavLink = ({ to, label }) => (
-  <Link
-    to={to}
-    className="text-green-700 font-semibold hover:text-[#111725] transition"
-  >
-    {label}
-  </Link>
-)
-
-/* Reusable Mobile Link */
-const MobileLink = ({ to, label, setOpen }) => (
-  <Link
-    to={to}
-    onClick={() => setOpen(false)}
-    className="block px-6 py-3 text-green-700 font-semibold hover:bg-[#e6f6ee]"
-  >
-    {label}
-  </Link>
-)
 
 export default StudentNav

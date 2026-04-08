@@ -10,6 +10,7 @@ from .views import (
     SectionStudentsView, ManualAttendanceView,
     StudentSubjectAttendanceView,
     StudentProfileView, TeacherProfileView,
+    SessionAttendanceView, AssignmentSessionsView,
 )
 
 urlpatterns = [
@@ -35,6 +36,8 @@ urlpatterns = [
     path('attendance/mark/', MarkAttendanceAPIView.as_view()),
     path('attendance/manual/', ManualAttendanceView.as_view()),
     path('attendance/student/', StudentSubjectAttendanceView.as_view()),
+    path('attendance/sessions/', AssignmentSessionsView.as_view()),           # GET ?assignment_id=
+    path('attendance/session/<int:session_id>/', SessionAttendanceView.as_view()),  # GET session detail
 
     # Section students (for teacher)
     path('sections/<int:section_id>/students/', SectionStudentsView.as_view()),

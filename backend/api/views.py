@@ -33,7 +33,6 @@ from student.models import StudentModel
 from student.serializers import StudentSerializer
 
 
-
 class UserRegisterView(generics.ListCreateAPIView):
     queryset = UserModel.objects.all()
     serializer_class = UserModelSerializers
@@ -67,8 +66,30 @@ class SubjectListCreateView(generics.ListCreateAPIView):
 
 
 class TeachingAssignmentListCreateView(generics.ListCreateAPIView):
-    queryset = TeachingAssignment.objects.all()
+    """
+    GET  → returns ONLY assignments belonging to the logged-in teacher.
+    POST → admin creates assignments (unrestricted).
+    This was the root cause of "Assignment not found or does not belong to you":
+    previously all assignments were returned, so a teacher could select
+    another teacher's assignment from the dropdown.
+    """
     serializer_class = TeachingAssignmentSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        # If the user is a teacher, filter to only their assignments
+        if user.role == 'teacher':
+            try:
+                return TeachingAssignment.objects.filter(
+                    teacher=user.teacher_profile
+                ).select_related('subject', 'section', 'section__branch', 'section__year')
+            except Exception:
+                return TeachingAssignment.objects.none()
+        # Admin or other roles get everything
+        return TeachingAssignment.objects.all().select_related(
+            'subject', 'section', 'section__branch', 'section__year'
+        )
 
 
 class TimeTableListCreateView(generics.ListCreateAPIView):
@@ -106,7 +127,13 @@ class StartAttendanceSession(APIView):
 
         if active_session:
             if not active_session.is_expired():
-                return Response({"error": "An active session already exists for this class"}, status=400)
+                # Return the existing session so the teacher can keep using it
+                return Response({
+                    "session_id": active_session.id,
+                    "qr_token": str(active_session.qr_token),
+                    "expires_at": active_session.expires_at,
+                    "resumed": True,
+                })
             else:
                 active_session.is_active = False
                 active_session.save()
@@ -119,7 +146,8 @@ class StartAttendanceSession(APIView):
         return Response({
             "session_id": session.id,
             "qr_token": str(session.qr_token),
-            "expires_at": session.expires_at
+            "expires_at": session.expires_at,
+            "resumed": False,
         })
 
 
@@ -164,10 +192,10 @@ class MarkAttendanceAPIView(APIView):
 
         return Response({"message": "Attendance marked successfully"}, status=201)
 
+
 # ─── Timetable Views ────────────────────────────────────────────
 
 class StudentTimetableView(APIView):
-    """Student calls this to get their own timetable based on their section."""
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -188,7 +216,6 @@ class StudentTimetableView(APIView):
 
 
 class TeacherTimetableView(APIView):
-    """Teacher calls this to get their own timetable across all sections they teach."""
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -208,14 +235,12 @@ class TeacherTimetableView(APIView):
 # ─── Teacher: View Students of a Section ────────────────────────
 
 class SectionStudentsView(APIView):
-    """Teacher passes section_id and gets all students in that section."""
     permission_classes = [IsAuthenticated]
 
     def get(self, request, section_id):
         if request.user.role != 'teacher':
             return Response({"error": "Only teachers allowed"}, status=403)
 
-        # Make sure this teacher actually teaches this section
         teaches = TeachingAssignment.objects.filter(
             teacher=request.user.teacher_profile,
             section_id=section_id
@@ -235,10 +260,6 @@ class SectionStudentsView(APIView):
 # ─── Teacher: Manual Attendance ──────────────────────────────────
 
 class ManualAttendanceView(APIView):
-    """
-    Teacher sends a session_id and a list of student ids who are present.
-    All students in the section are marked, present or absent.
-    """
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -246,7 +267,7 @@ class ManualAttendanceView(APIView):
             return Response({"error": "Only teachers allowed"}, status=403)
 
         session_id = request.data.get('session_id')
-        present_student_ids = request.data.get('present_student_ids', [])  # list of StudentModel ids
+        present_student_ids = request.data.get('present_student_ids', [])
 
         if not session_id:
             return Response({"error": "session_id is required"}, status=400)
@@ -259,7 +280,6 @@ class ManualAttendanceView(APIView):
         except AttendanceSession.DoesNotExist:
             return Response({"error": "Session not found or not yours"}, status=404)
 
-        # Get all students in the section
         all_students = StudentModel.objects.filter(
             section=session.assignment.section
         )
@@ -282,10 +302,103 @@ class ManualAttendanceView(APIView):
         return Response({"marked": marked}, status=200)
 
 
+# ─── Teacher: Attendance Records for a Session ───────────────────
+
+class SessionAttendanceView(APIView):
+    """
+    GET /api/attendance/session/<session_id>/
+    Returns who was present/absent in a specific session.
+    Teacher must own the session.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, session_id):
+        if request.user.role != 'teacher':
+            return Response({"error": "Only teachers allowed"}, status=403)
+
+        try:
+            session = AttendanceSession.objects.select_related(
+                'assignment__subject',
+                'assignment__section__branch',
+            ).get(
+                id=session_id,
+                assignment__teacher=request.user.teacher_profile
+            )
+        except AttendanceSession.DoesNotExist:
+            return Response({"error": "Session not found"}, status=404)
+
+        records = Attendance.objects.filter(session=session).select_related('student__user')
+
+        attendance_list = [
+            {
+                "student_id": r.student.id,
+                "full_name": r.student.user.get_full_name() or r.student.user.username,
+                "roll_number": r.student.roll_number,
+                "status": r.status,
+                "marked_at": r.marked_at,
+            }
+            for r in records
+        ]
+
+        return Response({
+            "session_id": session.id,
+            "subject": session.assignment.subject.name,
+            "section": str(session.assignment.section),
+            "date": session.date,
+            "start_time": session.start_time,
+            "expires_at": session.expires_at,
+            "is_active": session.is_active,
+            "attendance": attendance_list,
+        })
+
+
+# ─── Teacher: All Sessions for an Assignment ─────────────────────
+
+class AssignmentSessionsView(APIView):
+    """
+    GET /api/attendance/sessions/?assignment_id=<id>
+    Returns all past sessions for a given assignment (for attendance history).
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role != 'teacher':
+            return Response({"error": "Only teachers allowed"}, status=403)
+
+        assignment_id = request.query_params.get('assignment_id')
+        if not assignment_id:
+            return Response({"error": "assignment_id query param required"}, status=400)
+
+        try:
+            assignment = TeachingAssignment.objects.get(
+                id=assignment_id,
+                teacher=request.user.teacher_profile
+            )
+        except TeachingAssignment.DoesNotExist:
+            return Response({"error": "Assignment not found or not yours"}, status=404)
+
+        sessions = AttendanceSession.objects.filter(
+            assignment=assignment
+        ).order_by('-date', '-start_time')
+
+        data = [
+            {
+                "session_id": s.id,
+                "date": s.date,
+                "start_time": s.start_time,
+                "is_active": s.is_active,
+                "present_count": Attendance.objects.filter(session=s, status=True).count(),
+                "total_count": Attendance.objects.filter(session=s).count(),
+            }
+            for s in sessions
+        ]
+
+        return Response(data)
+
+
 # ─── Student: Individual Subject Attendance ───────────────────────
 
 class StudentSubjectAttendanceView(APIView):
-    """Returns attendance breakdown per subject for the logged in student."""
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -364,7 +477,6 @@ class StudentProfileView(APIView):
 
 
 class TeacherProfileView(APIView):
-    """Returns full profile data for the logged in teacher."""
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -373,7 +485,6 @@ class TeacherProfileView(APIView):
         except Exception:
             return Response({"error": "Teacher profile not found"}, status=404)
 
-        from api.models import TeachingAssignment
         assignments = TeachingAssignment.objects.filter(
             teacher=teacher
         ).select_related('subject', 'section')

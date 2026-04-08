@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from student.models import StudentModel
+from student.models import StudentModel,TaskSubmission
 from api.models import UserModel
 
 
@@ -39,3 +39,8 @@ class StudentAttendanceSummarySerializer(serializers.Serializer):
     present_classes = serializers.IntegerField()
     total_classes = serializers.IntegerField()
     attendance_percentage = serializers.FloatField()
+
+class TaskSubmissionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TaskSubmission
+        fields = ['id', 'task', 'score', 'submitted_at']

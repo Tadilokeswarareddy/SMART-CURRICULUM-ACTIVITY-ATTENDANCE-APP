@@ -41,3 +41,13 @@ class SmartTask(models.Model):
 
     def __str__(self):
         return self.title
+    
+class TaskSubmission(models.Model):
+    task = models.OneToOneField(SmartTask, on_delete=models.CASCADE, related_name='submission')
+    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    file = models.FileField(upload_to='task_submissions/')
+    score = models.FloatField(null=True, blank=True)
+    submitted_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.student} - {self.task.title} - {self.score}"

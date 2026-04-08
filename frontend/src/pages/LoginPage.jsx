@@ -4,23 +4,25 @@ import api from "../api"
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "../constants"
 import Class from '../media/classbro.svg'
 
+const G = {
+  50:"#f0fdf4",100:"#dcfce7",200:"#bbf7d0",300:"#86efac",
+  500:"#22c55e",600:"#16a34a",700:"#15803d",800:"#166534",900:"#14532d",
+}
+
 const LoginPage = () => {
   const navigate = useNavigate()
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
 
   const SendRequest = async (e) => {
     e.preventDefault()
+    setLoading(true)
     try {
-      const response = await api.post("/api/token/", {
-        username,
-        password,
-      })
-
+      const response = await api.post("/api/token/", { username, password })
       localStorage.setItem(ACCESS_TOKEN, response.data.access)
       localStorage.setItem(REFRESH_TOKEN, response.data.refresh)
-
       const role = response.data.role
       if (role === "student") navigate("/studenthome")
       else if (role === "teacher") navigate("/teacherhome")
@@ -28,114 +30,73 @@ const LoginPage = () => {
     } catch {
       setError("Invalid username or password")
     }
+    setLoading(false)
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#e9f7ef] px-4">
-      <div
-        className="
-          w-full max-w-md
-          md:max-w-4xl md:h-[520px]
-          bg-white rounded-3xl shadow-xl
-          flex flex-col md:flex-row
-          overflow-hidden
-        "
-      >
-        <div
-          className="
-            md:w-1/2
-            bg-[#e6f6ee]
-            flex flex-col items-center justify-center
-            p-6 md:p-10
-            text-center
-          "
-        >
-          <h1 className="text-3xl font-bold text-green-700 mb-2">
-            Shusseki
-          </h1>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap');
+        @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+        .lp-input { border:none; border-bottom:1.5px solid ${G[200]}; padding:10px 0; width:100%; font-size:14px; font-family:'DM Sans',sans-serif; color:${G[900]}; background:transparent; outline:none; transition:border-color 0.2s; }
+        .lp-input:focus { border-color:${G[500]}; }
+        .lp-input::placeholder { color:#9ca3af; }
+        .lp-btn:hover { background:${G[800]} !important; }
+      `}</style>
 
-          <p className="text-gray-600 text-sm md:text-base mb-6">
-            Smart Attendance & Curriculum Management
-          </p>
+      <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:G[50], padding:16, fontFamily:"'DM Sans',sans-serif" }}>
+        <div style={{ width:"100%", maxWidth:860, background:"#fff", borderRadius:24, boxShadow:"0 8px 40px rgba(0,0,0,0.1)", overflow:"hidden", display:"flex", minHeight:500, animation:"fadeUp 0.5s ease both" }}>
 
-          <div
-            className="
-              w-40 h-40
-              md:w-64 md:h-64
-              bg-green-100 rounded-xl
-              flex items-center justify-center
-              text-green-600 text-xs md:text-sm
-            "
-          >
-            <img src={Class} alt="login" />
+          {/* Left panel */}
+          <div style={{ flex:"0 0 45%", background:`linear-gradient(135deg,${G[900]} 0%,${G[700]} 50%,${G[500]} 100%)`, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"40px 32px", position:"relative", overflow:"hidden" }}
+            className="lp-left">
+            <div style={{ position:"absolute", top:-60, right:-60, width:240, height:240, borderRadius:"50%", background:"rgba(255,255,255,0.05)" }} />
+            <div style={{ position:"absolute", bottom:20, left:-40, width:180, height:180, borderRadius:"50%", background:"rgba(255,255,255,0.04)" }} />
+            <h1 style={{ margin:"0 0 8px", fontSize:32, fontWeight:700, color:"#fff", fontFamily:"'DM Serif Display',serif", letterSpacing:"-0.5px", position:"relative", zIndex:1 }}>Shusseki</h1>
+            <p style={{ margin:"0 0 28px", fontSize:13, color:G[300], fontFamily:"'DM Sans',sans-serif", textAlign:"center", position:"relative", zIndex:1 }}>Smart Attendance &amp; Curriculum Management</p>
+            <div style={{ width:180, height:180, borderRadius:18, background:"rgba(255,255,255,0.1)", backdropFilter:"blur(10px)", border:"1px solid rgba(255,255,255,0.2)", display:"flex", alignItems:"center", justifyContent:"center", position:"relative", zIndex:1 }}>
+              <img src={Class} alt="login" style={{ width:"80%", height:"80%", objectFit:"contain" }} />
+            </div>
+          </div>
 
+          {/* Right panel */}
+          <div style={{ flex:1, display:"flex", flexDirection:"column", justifyContent:"center", padding:"48px 40px" }}>
+            <div style={{ animation:"fadeUp 0.5s ease both", animationDelay:"0.1s" }}>
+              <h2 style={{ margin:"0 0 6px", fontSize:24, fontWeight:700, color:G[900], fontFamily:"'DM Serif Display',serif" }}>
+                Welcome to <span style={{ color:G[600] }}>Shusseki</span>
+              </h2>
+              <p style={{ margin:"0 0 36px", fontSize:13, color:"#9ca3af", fontFamily:"'DM Sans',sans-serif" }}>Sign in to continue</p>
+
+              <form onSubmit={SendRequest} style={{ display:"flex", flexDirection:"column", gap:24 }}>
+                <div>
+                  <label style={{ display:"block", fontSize:10, fontWeight:700, color:G[600], textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:6, fontFamily:"'DM Sans',sans-serif" }}>Username</label>
+                  <input type="text" placeholder="Enter your username" value={username} onChange={(e) => setUsername(e.target.value)} className="lp-input" />
+                </div>
+                <div>
+                  <label style={{ display:"block", fontSize:10, fontWeight:700, color:G[600], textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:6, fontFamily:"'DM Sans',sans-serif" }}>Password</label>
+                  <input type="password" placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} className="lp-input" />
+                </div>
+
+                {error && <p style={{ margin:0, fontSize:12, color:"#dc2626", fontFamily:"'DM Sans',sans-serif" }}>{error}</p>}
+
+                <div style={{ textAlign:"right" }}>
+                  <span style={{ fontSize:12, color:G[600], cursor:"pointer", fontFamily:"'DM Sans',sans-serif" }}>Forgot password?</span>
+                </div>
+
+                <button type="submit" disabled={loading} className="lp-btn"
+                  style={{ background:G[800], color:"#fff", border:"none", borderRadius:12, padding:"13px", fontSize:14, fontWeight:600, fontFamily:"'DM Sans',sans-serif", cursor:"pointer", transition:"background 0.2s", opacity:loading?0.7:1 }}>
+                  {loading ? "Signing in…" : "Sign In"}
+                </button>
+              </form>
+            </div>
           </div>
         </div>
-        <div
-          className="
-            md:w-1/2
-            flex flex-col justify-center
-            px-6 py-10 md:px-12
-          "
-        >
-          <h2 className="text-xl md:text-2xl font-semibold mb-1">
-            Welcome to <span className="text-green-600">Shusseki</span>
-          </h2>
-
-          <p className="text-gray-500 text-sm mb-8">
-            Sign in to continue
-          </p>
-
-          <form onSubmit={SendRequest} className="space-y-5">
-            <input
-              type="text"
-              placeholder="Username or email"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="
-                w-full border-b border-gray-300
-                focus:outline-none focus:border-green-500
-                py-2 text-sm
-              "
-            />
-
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="
-                w-full border-b border-gray-300
-                focus:outline-none focus:border-green-500
-                py-2 text-sm
-              "
-            />
-
-            {error && (
-              <p className="text-red-500 text-xs">
-                {error}
-              </p>
-            )}
-
-            <div className="text-right text-xs text-green-600 cursor-pointer">
-              Forgot password?
-            </div>
-
-            <button
-              type="submit"
-              className="
-                w-full bg-gray-800 text-white
-                py-2.5 rounded-full
-                hover:bg-gray-900 transition
-                text-sm
-              "
-            >
-              Sign In
-            </button>
-          </form>
-        </div>
       </div>
-    </div>
+
+      <style>{`
+        @media (max-width: 640px) { .lp-left { display: none !important; } }
+      `}</style>
+    </>
   )
 }
 

@@ -1,126 +1,109 @@
-import React, { useState } from "react";
-import TeacherNav from "../../components/TeacherNav";
+import React, { useState, useEffect } from "react"
+import TeacherNav from "../../components/TeacherNav"
+import api from "../../api"
 
-const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+const G = {
+  50:"#f0fdf4",100:"#dcfce7",200:"#bbf7d0",300:"#86efac",
+  400:"#4ade80",500:"#22c55e",600:"#16a34a",700:"#15803d",
+  800:"#166534",900:"#14532d",
+}
 
-const timetable = {
-  Monday: [
-    {
-      time: "09:00 - 10:00",
-      subject: "DBMS",
-      section: "CSE - A",
-      room: "301",
-    },
-    {
-      time: "10:00 - 11:00",
-      subject: "Operating Systems",
-      section: "IT - A",
-      room: "204",
-    },
-  ],
-  Tuesday: [
-    {
-      time: "11:15 - 12:15",
-      subject: "Computer Networks",
-      section: "CSE - B",
-      room: "105",
-    },
-  ],
-  Wednesday: [
-    {
-      time: "09:00 - 10:00",
-      subject: "DBMS",
-      section: "CSE - A",
-      room: "301",
-    },
-    {
-      time: "01:00 - 02:00",
-      subject: "Software Engineering",
-      section: "IT - A",
-      room: "210",
-    },
-  ],
-  Thursday: [],
-  Friday: [
-    {
-      time: "10:00 - 11:00",
-      subject: "AI Basics",
-      section: "CSE - B",
-      room: "401",
-    },
-  ],
-};
+const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+const dayKeyMap = { Monday:"mon", Tuesday:"tue", Wednesday:"wed", Thursday:"thu", Friday:"fri" }
 
 const TeacherTimetable = () => {
-  const [selectedDay, setSelectedDay] = useState("Monday");
+  const [selectedDay, setSelectedDay] = useState("Monday")
+  const [timetable, setTimetable] = useState({})
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    api.get("/api/timetable/teacher/").then((res) => {
+      const grouped = {}
+      days.forEach((d) => (grouped[d] = []))
+      res.data.forEach((entry) => {
+        const dayLabel = Object.keys(dayKeyMap).find((k) => dayKeyMap[k] === entry.day)
+        if (dayLabel) grouped[dayLabel].push({
+          time: `${entry.start_time?.slice(0,5)} - ${entry.end_time?.slice(0,5)}`,
+          subject: entry.assignment.subject.name,
+          code: entry.assignment.subject.code,
+          section: `${entry.assignment.section.branch.name} - ${entry.assignment.section.name}`,
+          sectionId: entry.assignment.section.id,
+        })
+      })
+      setTimetable(grouped); setLoading(false)
+    }).catch(() => setLoading(false))
+  }, [])
+
+  if (loading) return (
+    <>
+      <TeacherNav />
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"center", minHeight:"calc(100vh - 64px)", background:G[50] }}>
+        <p style={{ color:G[600], fontFamily:"'DM Sans',sans-serif", fontSize:14 }}>Loading timetable…</p>
+      </div>
+    </>
+  )
 
   return (
     <>
       <TeacherNav />
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap');
+        @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+        .tt-card:hover { box-shadow:0 6px 24px rgba(21,128,61,0.12) !important; transform:translateY(-2px); }
+      `}</style>
 
-      <div className="min-h-[calc(100vh-80px)] bg-gray-100 p-6 mt-5">
-        
-        {/* Day Selector */}
-        <div className="flex gap-2 mb-6">
-          {days.map((day) => (
-            <button
-              key={day}
-              onClick={() => setSelectedDay(day)}
-              className={`px-4 py-2 rounded-full text-sm font-medium
-                ${
-                  selectedDay === day
-                    ? "bg-blue-600 text-white"
-                    : "bg-white text-gray-600 hover:bg-gray-200"
-                }`}
-            >
-              {day}
-            </button>
-          ))}
-        </div>
+      <div style={{ minHeight:"calc(100vh - 64px)", background:G[50], padding:"28px 20px 56px", fontFamily:"'DM Sans',sans-serif" }}>
+        <div style={{ maxWidth:900, margin:"0 auto" }}>
 
-        {/* Timetable */}
-        <div className="bg-white rounded-xl shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">
-            {selectedDay}'s Schedule
-          </h2>
+          <div style={{ display:"flex", gap:8, marginBottom:24, overflowX:"auto", paddingBottom:4 }}>
+            {days.map((day) => {
+              const active = selectedDay === day
+              return (
+                <button key={day} onClick={() => setSelectedDay(day)}
+                  style={{ padding:"9px 20px", borderRadius:999, border:"none", fontFamily:"'DM Sans',sans-serif", fontWeight:600, fontSize:13, cursor:"pointer", whiteSpace:"nowrap", transition:"all 0.2s",
+                    background: active ? G[700] : "#fff",
+                    color: active ? "#fff" : G[700],
+                    boxShadow: active ? `0 2px 12px ${G[300]}` : `0 0 0 1.5px ${G[200]}`,
+                  }}>
+                  {day}
+                </button>
+              )
+            })}
+          </div>
 
-          {timetable[selectedDay].length === 0 ? (
-            <p className="text-gray-500">
-              No classes scheduled for this day.
-            </p>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {timetable[selectedDay].map((cls, index) => (
-                <div
-                  key={index}
-                  className="border rounded-xl p-4 bg-gray-50 hover:shadow-md transition"
-                >
-                  <p className="text-lg font-semibold mb-1">
-                    {cls.subject}
-                  </p>
+          <div style={{ background:"#fff", borderRadius:18, boxShadow:`0 2px 16px rgba(0,0,0,0.07),0 0 0 1px ${G[100]}`, padding:"28px", animation:"fadeUp 0.4s ease both" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:22 }}>
+              <div style={{ width:3, height:20, borderRadius:2, background:`linear-gradient(to bottom,${G[500]},${G[300]})` }} />
+              <h2 style={{ margin:0, fontSize:16, fontWeight:700, color:G[800], fontFamily:"'DM Sans',sans-serif" }}>{selectedDay}'s Schedule</h2>
+            </div>
 
-                  <p className="text-sm text-gray-600 mb-2">
-                    {cls.section}
-                  </p>
-
-                  <div className="mt-3 text-sm text-gray-700">
-                    <p>
-                      <span className="font-medium">Time:</span>{" "}
-                      {cls.time}
-                    </p>
-                    <p>
-                      <span className="font-medium">Room:</span>{" "}
-                      {cls.room}
+            {!timetable[selectedDay] || timetable[selectedDay].length === 0 ? (
+              <div style={{ textAlign:"center", padding:"32px 0" }}>
+                <span style={{ fontSize:32 }}>📅</span>
+                <p style={{ color:"#9ca3af", fontSize:13, fontFamily:"'DM Sans',sans-serif", marginTop:8 }}>No classes scheduled for this day.</p>
+              </div>
+            ) : (
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))", gap:16 }}>
+                {timetable[selectedDay].map((cls, index) => (
+                  <div key={index} className="tt-card" style={{ border:`1.5px solid ${G[100]}`, borderRadius:14, padding:"18px 16px", background:G[50], transition:"all 0.2s", cursor:"default" }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:10 }}>
+                      <div style={{ width:3, height:16, borderRadius:2, background:`linear-gradient(to bottom,${G[500]},${G[300]})` }} />
+                      <h3 style={{ margin:0, fontSize:14, fontWeight:700, color:G[800], fontFamily:"'DM Sans',sans-serif" }}>{cls.subject}</h3>
+                    </div>
+                    <span style={{ display:"inline-block", background:G[100], color:G[700], borderRadius:6, padding:"2px 8px", fontSize:10, fontWeight:700, letterSpacing:"0.8px", marginBottom:8, fontFamily:"'DM Sans',sans-serif" }}>{cls.code}</span>
+                    <p style={{ margin:"0 0 4px", fontSize:12, color:"#6b7280", fontFamily:"'DM Sans',sans-serif" }}>{cls.section}</p>
+                    <p style={{ margin:0, fontSize:12, color:"#6b7280", fontFamily:"'DM Sans',sans-serif" }}>
+                      <span style={{ fontWeight:600, color:G[800] }}>Time:</span> {cls.time}
                     </p>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </>
-  );
-};
+  )
+}
 
-export default TeacherTimetable;
+export default TeacherTimetable
