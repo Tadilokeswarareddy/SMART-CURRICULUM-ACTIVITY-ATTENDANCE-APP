@@ -72,7 +72,7 @@ const Scanqr = () => {
             }} />
             {!isRunning && (
               <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", borderRadius:14, background:"rgba(0,0,0,0.5)" }}>
-                <span style={{ fontSize:32 }}>📷</span>
+                <span style={{ fontSize:32 }}></span>
               </div>
             )}
           </div>

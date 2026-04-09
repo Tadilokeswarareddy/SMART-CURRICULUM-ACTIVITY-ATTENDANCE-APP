@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Pad from '../media/pad.svg';
 
 const G = {
   50:"#f0fdf4",100:"#dcfce7",200:"#bbf7d0",300:"#86efac",
@@ -136,8 +137,31 @@ const SmartTask = ({ onStatsRefresh }) => {
 
           {tasks.length === 0 && !loading && (
             <div style={{ background:"#fff",borderRadius:18,boxShadow:`0 2px 16px rgba(0,0,0,0.07),0 0 0 1px ${G[100]}`,padding:"56px 28px",textAlign:"center",animation:"fadeUp 0.5s ease both" }}>
-              <div style={{ width:64,height:64,borderRadius:"50%",background:G[100],display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 20px",fontSize:28 }}>📚</div>
-              <h2 style={{ margin:"0 0 8px",fontSize:22,fontWeight:700,color:G[800],fontFamily:"'DM Serif Display',serif" }}>Generate your tasks</h2>
+<div
+  style={{
+    width: 64,
+    height: 64,
+    borderRadius: "50%",
+    background: G[100],
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    margin: "0 auto 20px",
+    border: `2px solid ${G[200]}`,
+    overflow: "hidden"
+  }}
+>
+  <img
+    src={Pad}
+    alt="Task Icon"
+    style={{
+      width: 28,
+      height: 28,
+      objectFit: "contain"
+    }}
+  />
+</div>
+            <h2 style={{ margin:"0 0 8px",fontSize:22,fontWeight:700,color:G[800],fontFamily:"'DM Serif Display',serif" }}>Generate your tasks</h2>
               <p style={{ margin:"0 0 28px",fontSize:14,color:"#6b7280",lineHeight:1.6 }}>Tasks that help you better understand what you learn in uni</p>
               <button onClick={getTasks} style={{ background:G[700],color:"#fff",border:"none",borderRadius:10,padding:"12px 28px",fontSize:14,fontWeight:600,cursor:"pointer" }}>
                 Generate 5 New Tasks

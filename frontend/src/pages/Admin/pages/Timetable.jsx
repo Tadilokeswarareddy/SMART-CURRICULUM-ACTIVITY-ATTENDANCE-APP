@@ -31,12 +31,20 @@ const Timetable = ({ data, reload, toast }) => {
       toast("All fields are required"); return
     }
     try {
-      const payload = { assignment: form.assignment_id, day: form.day, start_time: form.start_time, end_time: form.end_time }
+      const payload = {
+        assignment_id: form.assignment_id,
+        day: form.day,
+        start_time: form.start_time,
+        end_time: form.end_time
+      }
       modal === "edit"
         ? await api.patch(`/api/timetable/${form.id}/`, payload)
         : await api.post("/api/timetable/", payload)
       toast(modal === "edit" ? "Entry updated" : "Entry added"); close(); reload()
-    } catch (e) { toast(e?.response?.data?.non_field_errors?.[0] || "Error saving entry") }
+    } catch (e) {
+      console.log("Timetable save error:", e?.response?.data)
+      toast(e?.response?.data?.non_field_errors?.[0] || "Error saving entry")
+    }
   }
 
   const del = async id => {
@@ -46,7 +54,8 @@ const Timetable = ({ data, reload, toast }) => {
   }
 
   const items = (data.timetable || []).filter(t =>
-    `${t.assignment?.subject?.name} ${t.assignment?.teacher} ${t.day}`.toLowerCase().includes(search.toLowerCase())
+    `${t.assignment?.subject?.name} ${t.assignment?.teacher} ${t.day}`
+      .toLowerCase().includes(search.toLowerCase())
   )
 
   const selectedAssignment = form.assignment_id
@@ -59,7 +68,9 @@ const Timetable = ({ data, reload, toast }) => {
       <div style={s.card}>
         <CardHeader label="All Entries" count={items.length}>
           <SearchBar value={search} onChange={setSearch} placeholder="Search subject, teacher…" />
-          <button style={s.btnPrimary} onClick={() => open()}><Icon name="plus" size={14} />Add Entry</button>
+          <button style={s.btnPrimary} onClick={() => open()}>
+            <Icon name="plus" size={14} />Add Entry
+          </button>
         </CardHeader>
         <TableWrap cols={["Day", "Subject", "Teacher", "Section", "Start", "End", "Actions"]}>
           {items.length === 0 ? <EmptyRow cols={7} /> : items.map(t => (
@@ -70,18 +81,32 @@ const Timetable = ({ data, reload, toast }) => {
               <Td><Badge color="blue">{sectionLabel(t.assignment?.section)}</Badge></Td>
               <Td muted>{t.start_time}</Td>
               <Td muted>{t.end_time}</Td>
-              <Td><BtnRow>
-                <button style={s.btnSm} onClick={() => open(t)}><Icon name="edit" size={12} />Edit</button>
-                <button style={s.btnDanger} onClick={() => del(t.id)}><Icon name="trash" size={12} />Delete</button>
-              </BtnRow></Td>
+              <Td>
+                <BtnRow>
+                  <button style={s.btnSm} onClick={() => open(t)}>
+                    <Icon name="edit" size={12} />Edit
+                  </button>
+                  <button style={s.btnDanger} onClick={() => del(t.id)}>
+                    <Icon name="trash" size={12} />Delete
+                  </button>
+                </BtnRow>
+              </Td>
             </tr>
           ))}
         </TableWrap>
       </div>
+
       {modal && (
-        <Modal title={modal === "edit" ? "Edit Timetable Entry" : "Add Timetable Entry"} onClose={close} onSave={save}>
+        <Modal
+          title={modal === "edit" ? "Edit Timetable Entry" : "Add Timetable Entry"}
+          onClose={close}
+          onSave={save}
+        >
           <Field label="Teaching Assignment">
-            <Select value={form.assignment_id} onChange={v => setForm(f => ({ ...f, assignment_id: v }))}>
+            <Select
+              value={form.assignment_id || ""}
+              onChange={v => setForm(f => ({ ...f, assignment_id: v }))}
+            >
               <option value="">-- Select Assignment --</option>
               {(data.assignments || []).map(a => (
                 <option key={a.id} value={a.id}>
@@ -90,23 +115,47 @@ const Timetable = ({ data, reload, toast }) => {
               ))}
             </Select>
           </Field>
+
           {selectedAssignment && (
-            <div style={{ background: G[50], border: `1px solid ${G[200]}`, borderRadius: 8, padding: "9px 13px", fontSize: 12, color: G[700], fontFamily: "'DM Sans',sans-serif" }}>
+            <div style={{
+              background: G[50],
+              border: `1px solid ${G[200]}`,
+              borderRadius: 8,
+              padding: "9px 13px",
+              fontSize: 12,
+              color: G[700],
+              fontFamily: "'DM Sans',sans-serif"
+            }}>
               {selectedAssignment.teacher} teaches {selectedAssignment.subject?.name || selectedAssignment.subject}
             </div>
           )}
+
           <Field label="Day">
-            <Select value={form.day} onChange={v => setForm(f => ({ ...f, day: v }))}>
+            <Select
+              value={form.day || ""}
+              onChange={v => setForm(f => ({ ...f, day: v }))}
+            >
               <option value="">-- Select Day --</option>
-              {DAYS.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+              {DAYS.map(d => (
+                <option key={d.value} value={d.value}>{d.label}</option>
+              ))}
             </Select>
           </Field>
+
           <div style={s.formRow}>
             <Field label="Start Time">
-              <Input type="time" value={form.start_time} onChange={v => setForm(f => ({ ...f, start_time: v }))} />
+              <Input
+                type="time"
+                value={form.start_time || ""}
+                onChange={v => setForm(f => ({ ...f, start_time: v }))}
+              />
             </Field>
             <Field label="End Time">
-              <Input type="time" value={form.end_time} onChange={v => setForm(f => ({ ...f, end_time: v }))} />
+              <Input
+                type="time"
+                value={form.end_time || ""}
+                onChange={v => setForm(f => ({ ...f, end_time: v }))}
+              />
             </Field>
           </div>
         </Modal>

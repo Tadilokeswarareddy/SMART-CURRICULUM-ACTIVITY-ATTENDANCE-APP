@@ -2,39 +2,16 @@
 import { useState } from "react"
 import api from "../../../api"
 import {
-  G, PageTitle, CardHeader, SearchBar, Modal, Field, Input, Select,
-  TableWrap, EmptyRow, Td, BtnRow, Badge, Avatar, Icon, s
+  G, PageTitle, CardHeader, SearchBar, Modal, Field, Input,
+  TableWrap, EmptyRow, Td, Badge, Avatar, Icon, s
 } from "../components/shared"
-
-// Merge teachers + students into a unified user list
-const buildUserList = (data) => {
-  const teachers = (data.teachers || []).map(t => ({
-    id:       `t-${t.id}`,
-    rawId:    t.id,
-    name:     t.full_name,
-    username: t.username,
-    email:    t.email,
-    role:     "teacher",
-    extra:    t.department || t.designation || "—",
-  }))
-  const students = (data.students || []).map(st => ({
-    id:       `s-${st.id}`,
-    rawId:    st.id,
-    name:     st.full_name,
-    username: st.username,
-    email:    st.email,
-    role:     "student",
-    extra:    st.roll_number || "—",
-  }))
-  return [...teachers, ...students]
-}
 
 const roleColor = role => ({ teacher: "green", student: "blue", admin: "orange" }[role] || "gray")
 
 const Users = ({ data, reload, toast }) => {
-  const [modal, setModal]     = useState(false)
-  const [form, setForm]       = useState({ role: "student" })
-  const [search, setSearch]   = useState("")
+  const [modal, setModal]   = useState(false)
+  const [form, setForm]     = useState({ role: "student" })
+  const [search, setSearch] = useState("")
   const [roleFilter, setRoleFilter] = useState("all")
 
   const close = () => { setModal(false); setForm({ role: "student" }) }
@@ -65,22 +42,30 @@ const Users = ({ data, reload, toast }) => {
     }
   }
 
-  const allUsers = buildUserList(data)
+  // Use data.users directly — this includes ALL users even without profiles
+  const allUsers = (data.users || [])
 
   const items = allUsers.filter(u => {
-    const matchSearch = `${u.name} ${u.username} ${u.email} ${u.extra}`.toLowerCase().includes(search.toLowerCase())
-    const matchRole   = roleFilter === "all" || u.role === roleFilter
+    const fullName = `${u.first_name || ""} ${u.last_name || ""}`.trim()
+    const matchSearch = `${fullName} ${u.username} ${u.email}`
+      .toLowerCase().includes(search.toLowerCase())
+    const matchRole = roleFilter === "all" || u.role === roleFilter
     return matchSearch && matchRole
   })
+
+  // Check if a user already has a profile
+  const hasStudentProfile = userId =>
+    (data.students || []).some(st => st.user === userId)
+  const hasTeacherProfile = userId =>
+    (data.teachers || []).some(t => t.user_id === userId)
 
   return (
     <>
       <PageTitle title="Users" sub="View all accounts and create new ones" />
       <div style={s.card}>
         <CardHeader label="All Users" count={items.length}>
-          {/* Role filter tabs */}
           <div style={{ display: "flex", gap: 4, background: G[50], borderRadius: 9, padding: 3, border: `1px solid ${G[100]}` }}>
-            {["all", "teacher", "student"].map(r => (
+            {["all", "teacher", "student", "admin"].map(r => (
               <button
                 key={r}
                 onClick={() => setRoleFilter(r)}
@@ -89,8 +74,7 @@ const Users = ({ data, reload, toast }) => {
                   fontFamily: "'DM Sans',sans-serif", fontSize: 11, fontWeight: 700,
                   background: roleFilter === r ? G[700] : "transparent",
                   color: roleFilter === r ? "#fff" : G[600],
-                  transition: "all 0.12s",
-                  textTransform: "capitalize",
+                  transition: "all 0.12s", textTransform: "capitalize",
                 }}
               >
                 {r === "all" ? "All" : r + "s"}
@@ -98,37 +82,51 @@ const Users = ({ data, reload, toast }) => {
             ))}
           </div>
           <SearchBar value={search} onChange={setSearch} placeholder="Search by name, email…" />
-          <button style={s.btnPrimary} onClick={() => setModal(true)}><Icon name="plus" size={14} />Add User</button>
+          <button style={s.btnPrimary} onClick={() => { setForm({ role: "student" }); setModal(true) }}>
+            <Icon name="plus" size={14} />Add User
+          </button>
         </CardHeader>
-        <TableWrap cols={["Name", "Username", "Email", "Role", "Details"]}>
-          {items.length === 0 ? <EmptyRow cols={5} /> : items.map(u => (
-            <tr key={u.id}>
-              <Td>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <Avatar name={u.name} color={roleColor(u.role)} />
-                  <div style={{ fontWeight: 600, fontSize: 13 }}>{u.name || "—"}</div>
-                </div>
-              </Td>
-              <Td muted>@{u.username}</Td>
-              <Td muted>{u.email || "—"}</Td>
-              <Td><Badge color={roleColor(u.role)}>{u.role}</Badge></Td>
-              <Td muted>{u.extra}</Td>
-            </tr>
-          ))}
+
+        <TableWrap cols={["Name", "Username", "Email", "Role", "Profile"]}>
+          {items.length === 0 ? <EmptyRow cols={5} /> : items.map(u => {
+            const fullName = `${u.first_name || ""} ${u.last_name || ""}`.trim() || u.username
+            const hasProfile =
+              u.role === "student" ? hasStudentProfile(u.id) :
+              u.role === "teacher" ? hasTeacherProfile(u.id) : true
+            return (
+              <tr key={u.id}>
+                <Td>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <Avatar name={fullName} color={roleColor(u.role)} />
+                    <div style={{ fontWeight: 600, fontSize: 13 }}>{fullName}</div>
+                  </div>
+                </Td>
+                <Td muted>@{u.username}</Td>
+                <Td muted>{u.email || "—"}</Td>
+                <Td><Badge color={roleColor(u.role)}>{u.role}</Badge></Td>
+                <Td>
+                  {hasProfile
+                    ? <Badge color="green">Profile set</Badge>
+                    : <Badge color="orange">No profile</Badge>
+                  }
+                </Td>
+              </tr>
+            )
+          })}
         </TableWrap>
       </div>
 
       {modal && (
         <Modal title="Add New User" onClose={close} onSave={save}>
-          {/* Role selector — prominent, at the top */}
           <Field label="Role">
             <div style={{ display: "flex", gap: 8 }}>
               {["student", "teacher", "admin"].map(r => (
                 <button
                   key={r}
+                  type="button"
                   onClick={() => setForm(f => ({ ...f, role: r }))}
                   style={{
-                    flex: 1, padding: "9px 0", borderRadius: 9, border: `1.5px solid`,
+                    flex: 1, padding: "9px 0", borderRadius: 9, border: "1.5px solid",
                     borderColor: form.role === r ? G[600] : G[200],
                     background: form.role === r ? G[100] : "#fff",
                     color: form.role === r ? G[800] : G[500],
@@ -144,27 +142,32 @@ const Users = ({ data, reload, toast }) => {
 
           <div style={s.formRow}>
             <Field label="First Name">
-              <Input value={form.first_name} onChange={v => setForm(f => ({ ...f, first_name: v }))} placeholder="John" />
+              <Input value={form.first_name || ""} onChange={v => setForm(f => ({ ...f, first_name: v }))} placeholder="John" />
             </Field>
             <Field label="Last Name">
-              <Input value={form.last_name} onChange={v => setForm(f => ({ ...f, last_name: v }))} placeholder="Doe" />
+              <Input value={form.last_name || ""} onChange={v => setForm(f => ({ ...f, last_name: v }))} placeholder="Doe" />
             </Field>
           </div>
           <div style={s.formRow}>
             <Field label="Username">
-              <Input value={form.username} onChange={v => setForm(f => ({ ...f, username: v }))} placeholder="johndoe" />
+              <Input value={form.username || ""} onChange={v => setForm(f => ({ ...f, username: v }))} placeholder="johndoe" />
             </Field>
             <Field label="Email">
-              <Input type="email" value={form.email} onChange={v => setForm(f => ({ ...f, email: v }))} placeholder="john@uni.edu" />
+              <Input type="email" value={form.email || ""} onChange={v => setForm(f => ({ ...f, email: v }))} placeholder="john@uni.edu" />
             </Field>
           </div>
           <Field label="Password">
-            <Input type="password" value={form.password} onChange={v => setForm(f => ({ ...f, password: v }))} placeholder="Set a password" />
+            <Input type="password" value={form.password || ""} onChange={v => setForm(f => ({ ...f, password: v }))} placeholder="Set a password" />
           </Field>
 
           {form.role === "teacher" && (
             <p style={{ margin: 0, fontSize: 12, color: G[600], fontFamily: "'DM Sans',sans-serif", background: G[50], padding: "8px 12px", borderRadius: 8, border: `1px solid ${G[100]}` }}>
-              The teacher can fill in their designation, department, and bio from their own profile page after logging in.
+              After creating the account, go to Teachers page to set up their profile.
+            </p>
+          )}
+          {form.role === "student" && (
+            <p style={{ margin: 0, fontSize: 12, color: G[600], fontFamily: "'DM Sans',sans-serif", background: G[50], padding: "8px 12px", borderRadius: 8, border: `1px solid ${G[100]}` }}>
+              After creating the account, go to Students page to set up their profile.
             </p>
           )}
           {form.role === "admin" && (

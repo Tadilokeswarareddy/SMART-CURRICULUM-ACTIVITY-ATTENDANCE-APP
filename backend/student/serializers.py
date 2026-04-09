@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from student.models import StudentModel,TaskSubmission
+from student.models import StudentModel, TaskSubmission
 from api.models import UserModel
 
 
@@ -16,13 +16,20 @@ class StudentSerializer(serializers.ModelSerializer):
     )
     full_name = serializers.SerializerMethodField()
     email = serializers.SerializerMethodField()
+    username = serializers.SerializerMethodField()
+    section_id = serializers.PrimaryKeyRelatedField(
+        queryset=__import__('api.models', fromlist=['Section']).Section.objects.all(),
+        source='section',
+        required=False,
+        allow_null=True
+    )
 
     class Meta:
         model = StudentModel
         fields = [
-            'id', 'user', 'full_name', 'email',
+            'id', 'user', 'full_name', 'email', 'username',
             'roll_number', 'phone_number',
-            'section', 'profile_picture'
+            'section', 'section_id', 'profile_picture'
         ]
 
     def get_full_name(self, obj):
@@ -30,6 +37,9 @@ class StudentSerializer(serializers.ModelSerializer):
 
     def get_email(self, obj):
         return obj.user.email
+
+    def get_username(self, obj):
+        return obj.user.username
 
 
 class StudentAttendanceSummarySerializer(serializers.Serializer):
@@ -39,6 +49,7 @@ class StudentAttendanceSummarySerializer(serializers.Serializer):
     present_classes = serializers.IntegerField()
     total_classes = serializers.IntegerField()
     attendance_percentage = serializers.FloatField()
+
 
 class TaskSubmissionSerializer(serializers.ModelSerializer):
     class Meta:

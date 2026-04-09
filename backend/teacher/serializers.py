@@ -1,26 +1,27 @@
 from rest_framework import serializers
 from .models import TeacherModel
+from api.models import UserModel
 
 
 class TeacherModelSerializer(serializers.ModelSerializer):
-    # These pull from the linked UserModel so frontend gets them in one call
     full_name = serializers.SerializerMethodField()
     email = serializers.SerializerMethodField()
+    username = serializers.SerializerMethodField()
+    user_id = serializers.PrimaryKeyRelatedField(
+        queryset=UserModel.objects.filter(role='teacher'),
+        source='user',
+        required=False
+    )
 
     class Meta:
         model = TeacherModel
         fields = [
-            'id',
-            'full_name',
-            'email',
-            'phone_number',
-            'employee_id',
-            'designation',
-            'department',
-            'qualification',
-            'experience_years',
-            'profile_picture',
-            'bio',
+            'id', 'user_id',
+            'full_name', 'email', 'username',
+            'phone_number', 'employee_id',
+            'designation', 'department',
+            'qualification', 'experience_years',
+            'profile_picture', 'bio',
         ]
 
     def get_full_name(self, obj):
@@ -28,3 +29,6 @@ class TeacherModelSerializer(serializers.ModelSerializer):
 
     def get_email(self, obj):
         return obj.user.email
+
+    def get_username(self, obj):
+        return obj.user.username

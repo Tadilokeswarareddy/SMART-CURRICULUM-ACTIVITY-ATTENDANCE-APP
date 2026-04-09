@@ -43,6 +43,7 @@ const ENDPOINTS = [
   ["/api/students/",       "students"],
   ["/api/teachers/",       "teachers"],
   ["/api/timetable/",      "timetable"],
+  ["/api/register/",       "users"],   
 ]
 
 // ── Main component ─────────────────────────────────────────────────────────────

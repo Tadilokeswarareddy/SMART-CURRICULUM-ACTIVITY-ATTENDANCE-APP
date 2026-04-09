@@ -5,6 +5,8 @@ from api.models import (
     AttendanceSession, Attendance
 )
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from teacher.models import TeacherModel
+
 
 
 class UserModelSerializers(serializers.ModelSerializer):
@@ -12,7 +14,7 @@ class UserModelSerializers(serializers.ModelSerializer):
 
     class Meta:
         model = UserModel
-        fields = ['username', 'password', 'first_name', 'last_name', 'role', 'email']
+        fields = ['id','username', 'password', 'first_name', 'last_name', 'role', 'email']
 
     def create(self, validated_data):
         user = UserModel.objects.create_user(**validated_data)
@@ -47,43 +49,71 @@ class YearSerializer(serializers.ModelSerializer):
 class SectionSerializer(serializers.ModelSerializer):
     branch = BranchSerializer(read_only=True)
     year = YearSerializer(read_only=True)
+    branch_id = serializers.PrimaryKeyRelatedField(
+        queryset=Branch.objects.all(), source='branch', write_only=False
+    )
+    year_id = serializers.PrimaryKeyRelatedField(
+        queryset=Year.objects.all(), source='year', write_only=False
+    )
 
     class Meta:
         model = Section
-        fields = ['id', 'branch', 'year', 'name']
+        fields = ['id', 'branch', 'year', 'branch_id', 'year_id', 'name']
+
 
 
 class SubjectSerializer(serializers.ModelSerializer):
     branch = BranchSerializer(read_only=True)
     year = YearSerializer(read_only=True)
+    branch_id = serializers.PrimaryKeyRelatedField(
+        queryset=Branch.objects.all(), source='branch', write_only=False
+    )
+    year_id = serializers.PrimaryKeyRelatedField(
+        queryset=Year.objects.all(), source='year', write_only=False
+    )
 
     class Meta:
         model = Subject
-        # NEW: added syllabus fields
         fields = [
             'id', 'name', 'code',
             'branch', 'year',
+            'branch_id', 'year_id',
             'syllabus_pdf', 'syllabus_description'
         ]
+
 
 
 class TeachingAssignmentSerializer(serializers.ModelSerializer):
     teacher = serializers.StringRelatedField()
     subject = SubjectSerializer(read_only=True)
     section = SectionSerializer(read_only=True)
+    subject_id = serializers.PrimaryKeyRelatedField(
+        queryset=Subject.objects.all(), source='subject', write_only=False
+    )
+    section_id = serializers.PrimaryKeyRelatedField(
+        queryset=Section.objects.all(), source='section', write_only=False
+    )
+    teacher_id = serializers.PrimaryKeyRelatedField(
+    queryset=TeacherModel.objects.all(), source='teacher', write_only=False
+    )
 
     class Meta:
         model = TeachingAssignment
-        fields = ['id', 'teacher', 'subject', 'section']
+        fields = ['id', 'teacher', 'teacher_id', 'subject', 'subject_id', 'section', 'section_id']
+
 
 
 class TimeTableSerializer(serializers.ModelSerializer):
-    assignment = TeachingAssignmentSerializer(read_only=True)
+    assignment = TeachingAssignmentSerializer(read_only=True)       
+    assignment_id = serializers.PrimaryKeyRelatedField(             
+        queryset=TeachingAssignment.objects.all(),
+        source='assignment',
+        write_only=False
+    )
 
     class Meta:
         model = TimeTable
-        fields = ['id', 'assignment', 'day', 'start_time', 'end_time']
-
+        fields = ['id', 'assignment', 'assignment_id', 'day', 'start_time', 'end_time']
 
 class AttendanceSessionSerializer(serializers.ModelSerializer):
     assignment = TeachingAssignmentSerializer(read_only=True)
