@@ -12,6 +12,8 @@ from .views import (
     StudentProfileView, TeacherProfileView,
     SessionAttendanceView, AssignmentSessionsView,
 )
+from .views import  RefreshQRToken
+
 
 urlpatterns = [
     # Auth
@@ -37,7 +39,9 @@ urlpatterns = [
     path('attendance/manual/', ManualAttendanceView.as_view()),
     path('attendance/student/', StudentSubjectAttendanceView.as_view()),
     path('attendance/sessions/', AssignmentSessionsView.as_view()),           # GET ?assignment_id=
-    path('attendance/session/<int:session_id>/', SessionAttendanceView.as_view()),  # GET session detail
+    path('attendance/session/<int:session_id>/', SessionAttendanceView.as_view()),
+    path('attendance/refresh-qr/', RefreshQRToken.as_view()),
+  # GET session detail
 
     # Section students (for teacher)
     path('sections/<int:section_id>/students/', SectionStudentsView.as_view()),

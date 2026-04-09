@@ -42,6 +42,10 @@ const card = {
   padding:"28px", marginBottom:24,
 }
 
+
+const QR_INTERVAL    = 30    // testing part give it more time when testing
+const SESSION_DURATION = 300 // ← 5 minutes total session
+
 const MarkAttendance = () => {
   const [assignments, setAssignments]     = useState([])
   const [assignmentId, setAssignmentId]   = useState("")
@@ -49,7 +53,8 @@ const MarkAttendance = () => {
 
   const [qrValue, setQrValue]             = useState("")
   const [qrSessionId, setQrSessionId]     = useState(null)
-  const [counter, setCounter]             = useState(300)
+  const [counter, setCounter]             = useState(SESSION_DURATION)
+  const [qrRotateCounter, setQrRotateCounter] = useState(QR_INTERVAL) // countdown to next QR swap
   const [isActive, setIsActive]           = useState(false)
   const [qrError, setQrError]             = useState("")
 
@@ -70,6 +75,7 @@ const MarkAttendance = () => {
     api.get("/api/assignments/").then(r => setAssignments(r.data)).catch(console.error)
   }, [])
 
+  // Main session countdown
   useEffect(() => {
     if (!isActive) return
     const t = setInterval(() => {
@@ -77,6 +83,30 @@ const MarkAttendance = () => {
         if (p <= 1) { clearInterval(t); setIsActive(false); setQrValue(""); return 0 }
         return p - 1
       })
+    }, 1000)
+    return () => clearInterval(t)
+  }, [isActive])
+
+  // QR rotation — fires every QR_INTERVAL seconds
+  useEffect(() => {
+    if (!isActive || !qrSessionId) return
+    const t = setInterval(async () => {
+      try {
+        const r = await api.post("/api/attendance/refresh-qr/", { session_id: qrSessionId })
+        setQrValue(r.data.qr_token)
+        setQrRotateCounter(QR_INTERVAL)
+      } catch (e) {
+        console.error("QR refresh failed", e)
+      }
+    }, QR_INTERVAL * 1000)
+    return () => clearInterval(t)
+  }, [isActive, qrSessionId])
+
+  // Visual countdown badge for QR swap (counts QR_INTERVAL → 1 then resets)
+  useEffect(() => {
+    if (!isActive) return
+    const t = setInterval(() => {
+      setQrRotateCounter(p => p <= 1 ? QR_INTERVAL : p - 1)
     }, 1000)
     return () => clearInterval(t)
   }, [isActive])
@@ -105,8 +135,11 @@ const MarkAttendance = () => {
     setQrError("")
     try {
       const r = await api.post("/api/attendance/start/", { assignment_id: parseInt(assignmentId) })
-      setQrValue(r.data.qr_token); setQrSessionId(r.data.session_id)
-      setCounter(300); setIsActive(true)
+      setQrValue(r.data.qr_token)
+      setQrSessionId(r.data.session_id)
+      setCounter(SESSION_DURATION)
+      setQrRotateCounter(QR_INTERVAL)
+      setIsActive(true)
     } catch (e) { setQrError(e.response?.data?.error || "Failed to start attendance") }
   }
 
@@ -151,7 +184,7 @@ const MarkAttendance = () => {
   }
 
   const selectedAssignment = assignments.find(a => a.id === parseInt(assignmentId))
-  const pct = Math.round((counter / 300) * 100)
+  const pct = Math.round((counter / SESSION_DURATION) * 100)
 
   return (
     <>
@@ -159,11 +192,13 @@ const MarkAttendance = () => {
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap');
         @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
         @keyframes spin   { to{transform:rotate(360deg)} }
+        @keyframes qrPulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
         .ma-tab-active  { border-bottom:2px solid ${G[700]}!important; color:${G[700]}!important; }
         .ma-tab:hover   { color:${G[600]}!important; }
         .ma-student:hover { border-color:${G[400]}!important; }
         .ma-session:hover { border-color:${G[300]}!important; box-shadow:0 2px 12px rgba(21,128,61,0.1)!important; }
         .ma-select:focus { border-color:${G[400]}!important; box-shadow:0 0 0 3px ${G[100]}!important; outline:none; }
+        .qr-pulse { animation: qrPulse 0.4s ease; }
       `}</style>
 
       <div style={{ minHeight:"100vh", background:G[50], fontFamily:"'DM Sans',sans-serif" }}>
@@ -231,7 +266,8 @@ const MarkAttendance = () => {
               {!isActive ? (
                 <div style={{ textAlign:"center", padding:"28px 0" }}>
                   <p style={{ color:"#6b7280", fontSize:13, marginBottom:24, maxWidth:360, margin:"0 auto 24px", lineHeight:1.6 }}>
-                    Generate a QR code for students in <strong style={{ color:G[700] }}>{selectedAssignment?.section.branch.name} {selectedAssignment?.section.name}</strong> to scan. Expires in 5 minutes.
+                    Generate a QR code for students in <strong style={{ color:G[700] }}>{selectedAssignment?.section.branch.name} {selectedAssignment?.section.name}</strong> to scan.
+                    Expires in {SESSION_DURATION/60} minutes. QR rotates every <strong style={{ color:G[700] }}>{QR_INTERVAL}s</strong>.
                   </p>
                   <button onClick={startQr} style={{ background:G[700], color:"#fff", border:"none", borderRadius:10, padding:"12px 28px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"'DM Sans',sans-serif" }}>
                     Generate QR Code
@@ -239,6 +275,7 @@ const MarkAttendance = () => {
                 </div>
               ) : (
                 <div style={{ textAlign:"center" }}>
+                  {/* Session countdown ring */}
                   <div style={{ display:"flex", justifyContent:"center", alignItems:"center", gap:20, marginBottom:24 }}>
                     <svg width="60" height="60" viewBox="0 0 60 60" style={{ transform:"rotate(-90deg)", flexShrink:0 }}>
                       <circle cx="30" cy="30" r="25" fill="none" stroke={G[100]} strokeWidth="4"/>
@@ -250,15 +287,39 @@ const MarkAttendance = () => {
                     </svg>
                     <div style={{ textAlign:"left" }}>
                       <p style={{ margin:0, fontSize:32, fontWeight:700, color: counter > 60 ? G[700] : "#dc2626", lineHeight:1, fontFamily:"'DM Serif Display',serif" }}>{counter}s</p>
-                      <p style={{ margin:"4px 0 0", fontSize:11, color:"#9ca3af" }}>until expiry</p>
+                      <p style={{ margin:"4px 0 0", fontSize:11, color:"#9ca3af" }}>session expires</p>
                     </div>
                   </div>
-                  <div style={{ display:"inline-block", padding:16, background:G[50], borderRadius:16, border:`1.5px solid ${G[200]}`, marginBottom:16 }}>
-                    <QRCodeCanvas value={qrValue} size={220}/>
+
+                  {/* QR code with rotation badge */}
+                  <div style={{ position:"relative", display:"inline-block", marginBottom:16 }}>
+                    <div style={{ padding:16, background:G[50], borderRadius:16, border:`1.5px solid ${G[200]}` }}>
+                      <QRCodeCanvas value={qrValue} size={220} key={qrValue}/>
+                    </div>
+                    {/* Countdown badge — shows seconds until next QR swap */}
+                    <div style={{
+                      position:"absolute", top:-10, right:-10,
+                      background: qrRotateCounter <= 2 ? "#dc2626" : G[700],
+                      color:"#fff", borderRadius:"50%",
+                      width:38, height:38,
+                      display:"flex", flexDirection:"column",
+                      alignItems:"center", justifyContent:"center",
+                      fontSize:14, fontWeight:700, lineHeight:1,
+                      boxShadow:"0 2px 8px rgba(0,0,0,0.2)",
+                      transition:"background 0.3s",
+                    }}>
+                      {qrRotateCounter}
+                      <span style={{ fontSize:7, fontWeight:600, opacity:0.85 }}>sec</span>
+                    </div>
                   </div>
-                  <p style={{ fontSize:12, color:"#9ca3af", margin:"0 0 20px" }}>
-                    Only students from <strong style={{ color:G[700] }}>{selectedAssignment?.section.branch.name} {selectedAssignment?.section.name}</strong> can mark attendance
+
+                  <p style={{ fontSize:12, color:"#9ca3af", margin:"0 0 4px" }}>
+                    QR rotates every <strong style={{ color:G[700] }}>{QR_INTERVAL} seconds</strong> — old codes stop working instantly
                   </p>
+                  <p style={{ fontSize:12, color:"#9ca3af", margin:"0 0 20px" }}>
+                    Only <strong style={{ color:G[700] }}>{selectedAssignment?.section.branch.name} {selectedAssignment?.section.name}</strong> students can mark attendance
+                  </p>
+
                   <button onClick={() => { setIsActive(false); setQrValue("") }}
                     style={{ background:"#dc2626", color:"#fff", border:"none", borderRadius:10, padding:"10px 24px", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"'DM Sans',sans-serif" }}>
                     Stop Session

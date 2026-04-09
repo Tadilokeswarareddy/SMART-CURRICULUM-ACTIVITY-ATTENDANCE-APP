@@ -177,9 +177,10 @@ def submit_task_file(request):
     file_bytes = uploaded_file.read()
 
     # Grade with Gemini
-    score = review_submission_with_gemini(
+    score, remark = review_submission_with_gemini(
         file_bytes, mime_type, task.title, task.description
     )
+
 
     # ✅ FIX: reset file pointer so Django can save the file to disk properly
     uploaded_file.seek(0)
@@ -193,7 +194,8 @@ def submit_task_file(request):
         },
     )
 
-    return Response({"score": score, "task_id": task.id})
+    return Response({"score": score, "task_id": task.id, "remark": remark})
+
 
 
 # ─────────────────────────────────────────────

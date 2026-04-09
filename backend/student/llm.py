@@ -70,7 +70,7 @@ def review_submission_with_gemini(
     mime_type: str,
     task_title: str,
     task_description: str,
-) -> float:
+) -> tuple:
     try:
         encoded_file = base64.b64encode(file_bytes).decode("utf-8")
 
@@ -103,7 +103,8 @@ Return ONLY a raw JSON object. No markdown, no backticks, no explanation outside
   "is_code": true or false,
   "content_summary": "one sentence describing exactly what you see",
   "score": 0.0,
-  "reason": "one sentence explaining the score"
+  "reason": "one sentence explaining the score",
+  "remark": "2-3 words of feedback shown to the student, e.g. 'Good linked list', 'Wrong task uploaded', 'Incomplete solution', 'Excellent work'"
 }}
 """
 
@@ -116,7 +117,6 @@ Return ONLY a raw JSON object. No markdown, no backticks, no explanation outside
             }],
             "generationConfig": {
                 "temperature": 0.0,
-                # responseMimeType works reliably on v1beta
                 "responseMimeType": "application/json",
             },
         }
@@ -140,16 +140,17 @@ Return ONLY a raw JSON object. No markdown, no backticks, no explanation outside
         result = json.loads(clean)
 
         score = float(result.get("score", 0))
-        # Clamp to [0, 10]
-        score = max(0.0, min(10.0, score))
+        score = max(0.0, min(10.0, score))  # Clamp to [0, 10]
+        remark = result.get("remark", "")
 
         print(f"\n--- AI GRADER DEBUG ---")
         print(f"Content : {result.get('content_summary')}")
         print(f"Reason  : {result.get('reason')}")
+        print(f"Remark  : {remark}")
         print(f"Score   : {score}")
         print(f"-----------------------\n")
 
-        return score
+        return score, remark  # ✅ always a tuple
 
     except json.JSONDecodeError as e:
         print(f"JSON PARSE ERROR in grader: {e}")
@@ -159,11 +160,11 @@ Return ONLY a raw JSON object. No markdown, no backticks, no explanation outside
         return _fallback_score(file_bytes, mime_type)
 
 
-def _fallback_score(file_bytes: bytes, mime_type: str) -> float:
+def _fallback_score(file_bytes: bytes, mime_type: str) -> tuple:
     """Heuristic scoring when AI is unavailable."""
     size = len(file_bytes)
     if mime_type == "text/plain":
-        return 7.0 if size > 150 else 4.5
-    if size < 10_000:  return 4.0
-    if size < 100_000: return 6.5
-    return 8.0
+        return (7.0, "Looks reasonable") if size > 150 else (4.5, "Too short")
+    if size < 10_000:  return (4.0, "File too small")
+    if size < 100_000: return (6.5, "Partial submission")
+    return (8.0, "Good file size")

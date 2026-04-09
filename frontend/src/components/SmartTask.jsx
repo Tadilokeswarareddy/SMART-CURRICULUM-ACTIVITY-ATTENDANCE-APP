@@ -62,7 +62,7 @@ const SmartTask = ({ onStatsRefresh }) => {
       });
       const data = await res.json();
       if (res.ok) {
-        setSubmissions(p => ({ ...p, [taskId]: { ...p[taskId], reviewing: false, submitted: true, score: data.score } }));
+        setSubmissions(p => ({ ...p, [taskId]: { ...p[taskId], reviewing: false, submitted: true, score: data.score, remark: data.remark } }));
         if (onStatsRefresh) onStatsRefresh();
       } else {
         setSubmissions(p => ({ ...p, [taskId]: { ...p[taskId], reviewing: false, error: data.error || "Submission failed." } }));
@@ -93,7 +93,7 @@ const SmartTask = ({ onStatsRefresh }) => {
   const scoreColor  = s => s >= 8 ? G[600] : s >= 5 ? "#d97706" : "#dc2626";
   const scoreBg     = s => s >= 8 ? G[100] : s >= 5 ? "#fef3c7" : "#fef2f2";
   const scoreBorder = s => s >= 8 ? G[200] : s >= 5 ? "#fde68a" : "#fecaca";
-  const scoreEmoji  = s => s >= 8 ? "🎉" : s >= 5 ? "👍" : "💪";
+  const scoreEmoji  = s => s >= 8 ? "" : s >= 5 ? "" : "";
 
   return (
     <>
@@ -197,8 +197,7 @@ const SmartTask = ({ onStatsRefresh }) => {
                   {sub.submitted && sub.score != null && (
                     <div style={{ background:scoreBg(sub.score),border:`1.5px solid ${scoreBorder(sub.score)}`,borderRadius:10,padding:"12px 16px",marginBottom:14,fontSize:13,fontWeight:600,color:scoreColor(sub.score) }}>
                       {scoreEmoji(sub.score)} Scored: <strong>{sub.score}/10</strong>
-                      {sub.score < 5 && <span style={{ fontWeight:400,marginLeft:8 }}>— Try resubmitting with a more complete solution.</span>}
-                      {sub.score >= 8 && <span style={{ fontWeight:400,marginLeft:8 }}>— Excellent work!</span>}
+                      {sub.remark && <span style={{ fontWeight:500,marginLeft:8,fontSize:12,opacity:0.85 }}>— {sub.remark}</span>}
                     </div>
                   )}
 

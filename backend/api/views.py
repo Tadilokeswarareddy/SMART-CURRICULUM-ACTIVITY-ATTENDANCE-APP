@@ -1,6 +1,6 @@
 from django.utils import timezone
 from datetime import timedelta
-
+import uuid
 from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -511,3 +511,34 @@ class TeacherProfileView(APIView):
             "profile_picture": request.build_absolute_uri(teacher.profile_picture.url) if teacher.profile_picture else None,
             "subjects_taught": subjects_taught,
         })
+
+class RefreshQRToken(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        if request.user.role != 'teacher':
+            return Response({"error": "Only teachers allowed"}, status=403)
+
+        session_id = request.data.get("session_id")
+        if not session_id:
+            return Response({"error": "session_id is required"}, status=400)
+
+        try:
+            session = AttendanceSession.objects.get(
+                id=session_id,
+                assignment__teacher=request.user.teacher_profile,
+                is_active=True,
+            )
+        except AttendanceSession.DoesNotExist:
+            return Response({"error": "Session not found or inactive"}, status=404)
+
+        if session.is_expired():
+            session.is_active = False
+            session.save()
+            return Response({"error": "Session has expired"}, status=400)
+
+        # Issue a brand-new token — old one is now invalid
+        session.qr_token = uuid.uuid4()
+        session.save()
+
+        return Response({"qr_token": str(session.qr_token)})
