@@ -11,6 +11,7 @@ from .views import (
     StudentSubjectAttendanceView,
     StudentProfileView, TeacherProfileView,
     SessionAttendanceView, AssignmentSessionsView,
+    BranchDetailView,YearDetailView,SectionDetailView,SubjectDetailView,TeachingAssignmentDetailView,TimeTableDetailView
 )
 from .views import  RefreshQRToken
 
@@ -54,4 +55,13 @@ urlpatterns = [
     path('', include('app_messages.urls')),
     path('', include('student.urls')),
     path('', include('teacher.urls')),
+
+
+    path('branches/<int:pk>/', BranchDetailView.as_view()),
+    path('years/<int:pk>/', YearDetailView.as_view()),
+    path('sections/<int:pk>/', SectionDetailView.as_view()),
+    path('subjects/<int:pk>/', SubjectDetailView.as_view()),
+    path('assignments/<int:pk>/', TeachingAssignmentDetailView.as_view()),
+    path('timetable/<int:pk>/', TimeTableDetailView.as_view()),
+
 ]

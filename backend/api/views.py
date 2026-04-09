@@ -542,3 +542,30 @@ class RefreshQRToken(APIView):
         session.save()
 
         return Response({"qr_token": str(session.qr_token)})
+    
+
+    
+class BranchDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Branch.objects.all()
+    serializer_class = BranchSerializer
+
+class YearDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Year.objects.all()
+    serializer_class = YearSerializer
+
+class SectionDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Section.objects.all()
+    serializer_class = SectionSerializer
+
+class SubjectDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Subject.objects.all()
+    serializer_class = SubjectSerializer
+
+class TeachingAssignmentDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = TeachingAssignment.objects.all()
+    serializer_class = TeachingAssignmentSerializer
+
+
+class TimeTableDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = TimeTable.objects.all()
+    serializer_class = TimeTableSerializer

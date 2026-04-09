@@ -16,6 +16,10 @@ import TeacherMessagesMain from './pages/TeacherPages/TeacherMessagesMain'
 //import Messagesend from './pages/Admin/Messagesend'
 import TeacherTimetable from './pages/TeacherPages/TeacherTimetable'
 import StudentTimetable from './pages/StudentPages/StudentTimetable'
+import AdminPanel from './pages/Admin/AdminPanel'
+
+
+
 const Logout = () => {
   localStorage.clear();
   return <Navigate to="/login" />;
@@ -40,6 +44,7 @@ const App = () => {
       <Route path="/teachermessages" element={<ProtectedRoute allowedRoles={["teacher"]}><TeacherMessagesMain /></ProtectedRoute>}/>
       <Route path="/markattendance" element={<ProtectedRoute allowedRoles={["teacher"]}><MarkAttendance /></ProtectedRoute>}/>
       <Route path="/teachertimetable" element={<ProtectedRoute allowedRoles={["teacher"]}><TeacherTimetable /></ProtectedRoute>}/>
+      <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><AdminPanel /></ProtectedRoute>} />
 
     </Routes>
     </BrowserRouter>
