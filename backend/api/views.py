@@ -42,9 +42,6 @@ class UserRegisterView(generics.ListCreateAPIView):
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
 
-
-# --- Setup Views ---
-
 class BranchListCreateView(generics.ListCreateAPIView):
     queryset = Branch.objects.all()
     serializer_class = BranchSerializer
@@ -78,7 +75,6 @@ class TeachingAssignmentListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        # If the user is a teacher, filter to only their assignments
         if user.role == 'teacher':
             try:
                 return TeachingAssignment.objects.filter(
@@ -86,7 +82,6 @@ class TeachingAssignmentListCreateView(generics.ListCreateAPIView):
                 ).select_related('subject', 'section', 'section__branch', 'section__year')
             except Exception:
                 return TeachingAssignment.objects.none()
-        # Admin or other roles get everything
         return TeachingAssignment.objects.all().select_related(
             'subject', 'section', 'section__branch', 'section__year'
         )
@@ -97,7 +92,6 @@ class TimeTableListCreateView(generics.ListCreateAPIView):
     serializer_class = TimeTableSerializer
 
 
-# --- Attendance Views ---
 
 class StartAttendanceSession(APIView):
     permission_classes = [IsAuthenticated]
@@ -119,7 +113,6 @@ class StartAttendanceSession(APIView):
         except TeachingAssignment.DoesNotExist:
             return Response({"error": "Assignment not found or does not belong to you"}, status=404)
 
-        # Check for existing active session
         active_session = AttendanceSession.objects.filter(
             assignment=assignment,
             is_active=True
@@ -127,7 +120,6 @@ class StartAttendanceSession(APIView):
 
         if active_session:
             if not active_session.is_expired():
-                # Return the existing session so the teacher can keep using it
                 return Response({
                     "session_id": active_session.id,
                     "qr_token": str(active_session.qr_token),
@@ -150,8 +142,11 @@ class StartAttendanceSession(APIView):
             "resumed": False,
         })
 
-
 class MarkAttendanceAPIView(APIView):
+    """
+    Student scans QR → writes to PendingScan (staging).
+    Nothing goes to Attendance until teacher submits.
+    """
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -159,7 +154,6 @@ class MarkAttendanceAPIView(APIView):
             return Response({"error": "Only students allowed"}, status=403)
 
         qr_token = request.data.get("qr_token")
-
         if not qr_token:
             return Response({"error": "qr_token is required"}, status=400)
 
@@ -181,19 +175,94 @@ class MarkAttendanceAPIView(APIView):
         if student.section != session.assignment.section:
             return Response({"error": "You are not enrolled in this class"}, status=403)
 
-        attendance, created = Attendance.objects.get_or_create(
-            student=student,
-            session=session,
-            defaults={"status": True}
-        )
+        from .models import PendingScan
+        _, created = PendingScan.objects.get_or_create(session=session, student=student)
 
         if not created:
-            return Response({"message": "Attendance already marked"}, status=200)
+            return Response({"message": "Already scanned — waiting for teacher to submit"}, status=200)
 
-        return Response({"message": "Attendance marked successfully"}, status=201)
+        return Response({"message": "Scan recorded — waiting for teacher to submit"}, status=201)
 
 
-# ─── Timetable Views ────────────────────────────────────────────
+class SessionScansView(APIView):
+    """
+    GET /api/attendance/session/<id>/scans/
+    Teacher polls this every 5s to see who has scanned so far.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, session_id):
+        if request.user.role != 'teacher':
+            return Response({"error": "Only teachers allowed"}, status=403)
+
+        try:
+            session = AttendanceSession.objects.get(
+                id=session_id,
+                assignment__teacher=request.user.teacher_profile
+            )
+        except AttendanceSession.DoesNotExist:
+            return Response({"error": "Session not found"}, status=404)
+
+        from .models import PendingScan
+        scanned_student_ids = list(
+            PendingScan.objects.filter(session=session)
+            .values_list('student_id', flat=True)
+        )
+
+        return Response({"scanned_student_ids": scanned_student_ids})
+
+
+class SubmitAttendanceView(APIView):
+    """
+    POST /api/attendance/submit/
+    Teacher submits final attendance. Writes to Attendance table,
+    clears PendingScan, closes the session.
+    Body: { session_id, present_student_ids: [...] }
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        if request.user.role != 'teacher':
+            return Response({"error": "Only teachers allowed"}, status=403)
+
+        session_id = request.data.get('session_id')
+        present_student_ids = request.data.get('present_student_ids', [])
+
+        if not session_id:
+            return Response({"error": "session_id is required"}, status=400)
+
+        try:
+            session = AttendanceSession.objects.get(
+                id=session_id,
+                assignment__teacher=request.user.teacher_profile
+            )
+        except AttendanceSession.DoesNotExist:
+            return Response({"error": "Session not found or not yours"}, status=404)
+
+        all_students = StudentModel.objects.filter(section=session.assignment.section)
+
+        marked = []
+        for student in all_students:
+            is_present = student.id in present_student_ids
+            Attendance.objects.update_or_create(
+                student=student,
+                session=session,
+                defaults={"status": is_present}
+            )
+            marked.append({
+                "student_id": student.id,
+                "roll_number": student.roll_number,
+                "name": str(student),
+                "status": is_present,
+            })
+
+        from .models import PendingScan
+        PendingScan.objects.filter(session=session).delete()
+        session.is_active = False
+        session.save()
+
+        return Response({"message": "Attendance submitted successfully", "marked": marked}, status=200)
+
 
 class StudentTimetableView(APIView):
     permission_classes = [IsAuthenticated]
@@ -232,8 +301,6 @@ class TeacherTimetableView(APIView):
         return Response(serializer.data)
 
 
-# ─── Teacher: View Students of a Section ────────────────────────
-
 class SectionStudentsView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -256,8 +323,6 @@ class SectionStudentsView(APIView):
         serializer = StudentSerializer(students, many=True)
         return Response(serializer.data)
 
-
-# ─── Teacher: Manual Attendance ──────────────────────────────────
 
 class ManualAttendanceView(APIView):
     permission_classes = [IsAuthenticated]
@@ -301,8 +366,6 @@ class ManualAttendanceView(APIView):
 
         return Response({"marked": marked}, status=200)
 
-
-# ─── Teacher: Attendance Records for a Session ───────────────────
 
 class SessionAttendanceView(APIView):
     """
@@ -352,8 +415,6 @@ class SessionAttendanceView(APIView):
         })
 
 
-# ─── Teacher: All Sessions for an Assignment ─────────────────────
-
 class AssignmentSessionsView(APIView):
     """
     GET /api/attendance/sessions/?assignment_id=<id>
@@ -395,8 +456,6 @@ class AssignmentSessionsView(APIView):
 
         return Response(data)
 
-
-# ─── Student: Individual Subject Attendance ───────────────────────
 
 class StudentSubjectAttendanceView(APIView):
     permission_classes = [IsAuthenticated]
@@ -454,7 +513,7 @@ class StudentSubjectAttendanceView(APIView):
         })
 
 
-# ─── Student & Teacher Profile Views ─────────────────────────────
+
 
 class StudentProfileView(APIView):
     permission_classes = [IsAuthenticated]
@@ -536,8 +595,6 @@ class RefreshQRToken(APIView):
             session.is_active = False
             session.save()
             return Response({"error": "Session has expired"}, status=400)
-
-        # Issue a brand-new token — old one is now invalid
         session.qr_token = uuid.uuid4()
         session.save()
 

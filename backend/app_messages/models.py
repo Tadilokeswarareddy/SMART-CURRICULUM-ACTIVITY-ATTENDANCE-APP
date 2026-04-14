@@ -16,9 +16,6 @@ class Message(models.Model):
         related_name='sent_messages'
     )
     sender_type = models.CharField(max_length=10, choices=SENDER_TYPE_CHOICES)
-
-    # Admin can target a section OR leave both null to broadcast to everyone
-    # Teacher must always target a section
     target_section = models.ForeignKey(
         'api.Section',
         on_delete=models.SET_NULL,

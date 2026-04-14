@@ -12,7 +12,7 @@ const NotFound404 = () => {
       </p>
 
       <Link
-        to="/login"
+        to="/"
         className="px-5 py-2 bg-red-600 text-white rounded-md"
       >
         Go to Login

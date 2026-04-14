@@ -41,7 +41,6 @@ def generate_task_from_llm():
             return random.choice(FALLBACK_TASK_POOLS)
 
         raw_text = res_data['candidates'][0]['content']['parts'][0]['text']
-        # Strip markdown fences if present
         clean = re.sub(r'```json|```', '', raw_text).strip()
         match = re.search(r'\[.*\]', clean, re.DOTALL)
         tasks = json.loads(match.group(0)) if match else json.loads(clean)
@@ -150,7 +149,7 @@ Return ONLY a raw JSON object. No markdown, no backticks, no explanation outside
         print(f"Score   : {score}")
         print(f"-----------------------\n")
 
-        return score, remark  # ✅ always a tuple
+        return score, remark  
 
     except json.JSONDecodeError as e:
         print(f"JSON PARSE ERROR in grader: {e}")

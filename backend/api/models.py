@@ -131,3 +131,20 @@ class Attendance(models.Model):
 
     def __str__(self):
         return f"{self.student} - {self.status}"
+
+
+class PendingScan(models.Model):
+    session = models.ForeignKey('api.AttendanceSession', on_delete=models.CASCADE, related_name='pending_scans')
+    student = models.ForeignKey('student.StudentModel', on_delete=models.CASCADE)
+    scanned_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['session', 'student'],
+                name='unique_pending_scan'
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.student} scanned for session {self.session_id}"

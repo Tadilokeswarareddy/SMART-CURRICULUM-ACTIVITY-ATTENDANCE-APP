@@ -11,7 +11,6 @@ class TeacherAdmin(admin.ModelAdmin):
     ordering       = ['user__first_name']
     autocomplete_fields = ['user']
 
-    # Grouped fieldsets so the form isn't one long wall of fields
     fieldsets = (
         ('Account', {
             'fields': ('user',)

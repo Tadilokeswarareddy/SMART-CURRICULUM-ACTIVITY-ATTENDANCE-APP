@@ -27,7 +27,6 @@ class SendMessageView(APIView):
         if user.role == 'teacher' and not target_section_id:
             return Response({"error": "Teachers must specify a target_section"}, status=400)
 
-        # Teachers can only message sections they actually teach
         if user.role == 'teacher':
             from api.models import TeachingAssignment
             teaches_section = TeachingAssignment.objects.filter(
@@ -65,7 +64,6 @@ class InboxView(APIView):
             except Exception:
                 return Response({"error": "Student profile not found"}, status=404)
 
-            # Get admin broadcasts (no section) + messages for their section
             messages = Message.objects.filter(
                 models.Q(target_section=None) |
                 models.Q(target_section=section)
@@ -82,7 +80,6 @@ class InboxView(APIView):
                 teacher=teacher_profile
             ).values_list('section_id', flat=True)
 
-            # Admin broadcasts + messages for sections this teacher teaches
             messages = Message.objects.filter(
                 models.Q(target_section=None) |
                 models.Q(target_section__in=teacher_sections)
@@ -97,8 +94,6 @@ class InboxView(APIView):
         serializer = MessageSerializer(messages, many=True)
         return Response(serializer.data)
 
-
-# fix the missing .objects.all() that was in your original views
 class MessageDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Message.objects.all()
     serializer_class = MessageSerializer

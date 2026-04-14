@@ -8,18 +8,10 @@ from .models import (
 )
 
 
-# ─────────────────────────────────────────────────────────────────
-# Site header
-# ─────────────────────────────────────────────────────────────────
 
 admin.site.site_header  = "College Admin"
 admin.site.site_title   = "College Admin"
 admin.site.index_title  = "Manage Everything"
-
-
-# ─────────────────────────────────────────────────────────────────
-# User
-# ─────────────────────────────────────────────────────────────────
 
 @admin.register(UserModel)
 class CustomUserAdmin(UserAdmin):
@@ -36,9 +28,7 @@ class CustomUserAdmin(UserAdmin):
     get_full_name.short_description = 'Full Name'
 
 
-# ─────────────────────────────────────────────────────────────────
-# Branch & Year — simple, nothing to add
-# ─────────────────────────────────────────────────────────────────
+
 
 @admin.register(Branch)
 class BranchAdmin(admin.ModelAdmin):
@@ -51,9 +41,6 @@ class YearAdmin(admin.ModelAdmin):
     list_display = ['year']
 
 
-# ─────────────────────────────────────────────────────────────────
-# Section — show branch + year together
-# ─────────────────────────────────────────────────────────────────
 
 @admin.register(Section)
 class SectionAdmin(admin.ModelAdmin):
@@ -63,9 +50,7 @@ class SectionAdmin(admin.ModelAdmin):
     ordering      = ['branch', 'year', 'name']
 
 
-# ─────────────────────────────────────────────────────────────────
-# Subject
-# ─────────────────────────────────────────────────────────────────
+
 
 @admin.register(Subject)
 class SubjectAdmin(admin.ModelAdmin):
@@ -81,20 +66,14 @@ class SubjectAdmin(admin.ModelAdmin):
     has_syllabus.short_description = 'Syllabus'
 
 
-# ─────────────────────────────────────────────────────────────────
-# TimeTable inline — add timetable slots right inside an assignment
-# ─────────────────────────────────────────────────────────────────
 
 class TimeTableInline(admin.TabularInline):
     model  = TimeTable
-    extra  = 3          # shows 3 blank rows so you can fill quickly
+    extra  = 3          
     fields = ['day', 'start_time', 'end_time']
 
 
-# ─────────────────────────────────────────────────────────────────
-# TeachingAssignment — the main convenience win
-# Adding a timetable is now: pick assignment → fill inline rows → save
-# ─────────────────────────────────────────────────────────────────
+
 
 @admin.register(TeachingAssignment)
 class TeachingAssignmentAdmin(admin.ModelAdmin):
@@ -117,9 +96,7 @@ class TeachingAssignmentAdmin(admin.ModelAdmin):
     timetable_slots.short_description = 'Timetable'
 
 
-# ─────────────────────────────────────────────────────────────────
-# TimeTable — standalone view if you need to bulk-edit slots
-# ─────────────────────────────────────────────────────────────────
+
 
 @admin.register(TimeTable)
 class TimeTableAdmin(admin.ModelAdmin):
@@ -129,9 +106,6 @@ class TimeTableAdmin(admin.ModelAdmin):
     ordering      = ['assignment__section', 'day', 'start_time']
 
 
-# ─────────────────────────────────────────────────────────────────
-# AttendanceSession
-# ─────────────────────────────────────────────────────────────────
 
 class AttendanceInline(admin.TabularInline):
     model         = Attendance
@@ -165,10 +139,6 @@ class AttendanceSessionAdmin(admin.ModelAdmin):
         return Attendance.objects.filter(session=obj).count()
     total_count.short_description = 'Total'
 
-
-# ─────────────────────────────────────────────────────────────────
-# Attendance
-# ─────────────────────────────────────────────────────────────────
 
 @admin.register(Attendance)
 class AttendanceAdmin(admin.ModelAdmin):

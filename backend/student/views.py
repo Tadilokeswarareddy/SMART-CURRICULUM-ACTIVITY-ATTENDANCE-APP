@@ -15,9 +15,6 @@ from .llm import generate_task_from_llm, review_submission_with_gemini
 from api.models import Attendance
 
 
-# ─────────────────────────────────────────────
-# Student CRUD
-# ─────────────────────────────────────────────
 
 class StudentModelView(generics.ListCreateAPIView):
     queryset = StudentModel.objects.all()
@@ -38,10 +35,6 @@ class StudentDetailview(generics.RetrieveUpdateDestroyAPIView):
     queryset = StudentModel.objects.all()
     serializer_class = StudentSerializer
 
-
-# ─────────────────────────────────────────────
-# Attendance
-# ─────────────────────────────────────────────
 
 class StudentAttendanceView(APIView):
     permission_classes = [IsAuthenticated]
@@ -87,9 +80,6 @@ class StudentAttendanceView(APIView):
         return Response(serializer.data)
 
 
-# ─────────────────────────────────────────────
-# Smart Tasks
-# ─────────────────────────────────────────────
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
@@ -173,16 +163,15 @@ def submit_task_file(request):
     except SmartTask.DoesNotExist:
         return Response({"error": "Task not found"}, status=404)
 
-    # Read bytes for AI grading
+
     file_bytes = uploaded_file.read()
 
-    # Grade with Gemini
     score, remark = review_submission_with_gemini(
         file_bytes, mime_type, task.title, task.description
     )
 
 
-    # ✅ FIX: reset file pointer so Django can save the file to disk properly
+
     uploaded_file.seek(0)
 
     submission, created = TaskSubmission.objects.update_or_create(
@@ -197,10 +186,6 @@ def submit_task_file(request):
     return Response({"score": score, "task_id": task.id, "remark": remark})
 
 
-
-# ─────────────────────────────────────────────
-# Stats
-# ─────────────────────────────────────────────
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])

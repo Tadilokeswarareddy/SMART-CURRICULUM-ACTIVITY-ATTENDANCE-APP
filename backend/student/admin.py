@@ -3,10 +3,6 @@ from django.utils.html import format_html
 from .models import StudentModel, SmartTask, TaskSubmission
 
 
-# ─────────────────────────────────────────────────────────────────
-# TaskSubmission inline — see submission score right inside a task
-# ─────────────────────────────────────────────────────────────────
-
 class TaskSubmissionInline(admin.StackedInline):
     model         = TaskSubmission
     extra         = 0
@@ -14,10 +10,6 @@ class TaskSubmissionInline(admin.StackedInline):
     readonly_fields = ['submitted_at']
     can_delete    = False
 
-
-# ─────────────────────────────────────────────────────────────────
-# Student
-# ─────────────────────────────────────────────────────────────────
 
 @admin.register(StudentModel)
 class StudentAdmin(admin.ModelAdmin):
@@ -46,10 +38,6 @@ class StudentAdmin(admin.ModelAdmin):
     profile_pic_preview.short_description = 'Photo'
 
 
-# ─────────────────────────────────────────────────────────────────
-# SmartTask — with submission score inline
-# ─────────────────────────────────────────────────────────────────
-
 @admin.register(SmartTask)
 class SmartTaskAdmin(admin.ModelAdmin):
     list_display   = ['title', 'student', 'duration', 'completed', 'get_score', 'created_at']
@@ -70,10 +58,6 @@ class SmartTaskAdmin(admin.ModelAdmin):
             return '—'
     get_score.short_description = 'Score'
 
-
-# ─────────────────────────────────────────────────────────────────
-# TaskSubmission — standalone view for bulk review
-# ─────────────────────────────────────────────────────────────────
 
 @admin.register(TaskSubmission)
 class TaskSubmissionAdmin(admin.ModelAdmin):

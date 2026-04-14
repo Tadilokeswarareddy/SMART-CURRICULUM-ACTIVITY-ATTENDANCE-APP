@@ -17,7 +17,7 @@ class StudentModel(models.Model):
         null=True,
         blank=True
     )
-    # NEW: student profile picture
+
     profile_picture = models.ImageField(
         upload_to='student_pics/',
         null=True,

@@ -20,7 +20,7 @@ import AdminPanel from './pages/Admin/AdminPanel'
 
 const Logout = () => {
   localStorage.clear();
-  return <Navigate to="/login" />;
+  return <Navigate to="/" />;
 };
 
 const App = () => {
