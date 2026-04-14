@@ -86,7 +86,7 @@ const Students = ({ data, reload, toast }) => {
       <PageTitle title="Students" sub="View and manage student accounts" />
       <div style={s.card}>
         <CardHeader label="All Students" count={items.length}>
-          <SearchBar value={search} onChange={setSearch} placeholder="Search by name or roll no…" />
+          <SearchBar value={search} onChange={setSearch}  />
           <button style={s.btnPrimary} onClick={() => open()}>
             <Icon name="plus" size={14} />Add Student
           </button>
@@ -138,22 +138,22 @@ const Students = ({ data, reload, toast }) => {
             <>
               <div style={s.formRow}>
                 <Field label="First Name">
-                  <Input value={form.first_name || ""} onChange={v => setForm(f => ({ ...f, first_name: v }))} placeholder="Alice" />
+                  <Input value={form.first_name || ""} onChange={v => setForm(f => ({ ...f, first_name: v }))}  />
                 </Field>
                 <Field label="Last Name">
-                  <Input value={form.last_name || ""} onChange={v => setForm(f => ({ ...f, last_name: v }))} placeholder="Johnson" />
+                  <Input value={form.last_name || ""} onChange={v => setForm(f => ({ ...f, last_name: v }))}  />
                 </Field>
               </div>
               <div style={s.formRow}>
                 <Field label="Username">
-                  <Input value={form.username || ""} onChange={v => setForm(f => ({ ...f, username: v }))} placeholder="alice01" />
+                  <Input value={form.username || ""} onChange={v => setForm(f => ({ ...f, username: v }))}  />
                 </Field>
                 <Field label="Email">
-                  <Input type="email" value={form.email || ""} onChange={v => setForm(f => ({ ...f, email: v }))} placeholder="alice@uni.edu" />
+                  <Input type="email" value={form.email || ""} onChange={v => setForm(f => ({ ...f, email: v }))}  />
                 </Field>
               </div>
               <Field label="Password">
-                <Input type="password" value={form.password || ""} onChange={v => setForm(f => ({ ...f, password: v }))} placeholder="Set a password" />
+                <Input type="password" value={form.password || ""} onChange={v => setForm(f => ({ ...f, password: v }))}  />
               </Field>
             </>
           )}
@@ -177,10 +177,10 @@ const Students = ({ data, reload, toast }) => {
           {/* Profile fields shown for both add modes and edit */}
           <div style={s.formRow}>
             <Field label="Roll Number">
-              <Input value={form.roll_number || ""} onChange={v => setForm(f => ({ ...f, roll_number: v }))} placeholder="CS/001" />
+              <Input value={form.roll_number || ""} onChange={v => setForm(f => ({ ...f, roll_number: v }))}  />
             </Field>
             <Field label="Phone Number">
-              <Input value={form.phone_number || ""} onChange={v => setForm(f => ({ ...f, phone_number: v }))} placeholder="9876543210" />
+              <Input value={form.phone_number || ""} onChange={v => setForm(f => ({ ...f, phone_number: v }))}  />
             </Field>
           </div>
           <Field label="Section">

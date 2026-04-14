@@ -6,14 +6,12 @@ import StudentHome from './pages/StudentHome'
 import TeacherHome from './pages/TeacherHome'
 import NotFound404 from './pages/NotFound404'
 import ProtectedRoute from './components/ProtectedRoute'
-//import Adminpanel from './pages/Adminpanel'
 import Curriculum from './pages/StudentPages/Curriculum'
 import Scanqr from './pages/StudentPages/Scanqr'
 import MarkAttendance from './pages/TeacherPages/MarkAttendance'
 import StudentProfile from './pages/StudentPages/StudentProfile'
 import TeacherProfile from './pages/TeacherPages/TeacherProfile'
 import TeacherMessagesMain from './pages/TeacherPages/TeacherMessagesMain'
-//import Messagesend from './pages/Admin/Messagesend'
 import TeacherTimetable from './pages/TeacherPages/TeacherTimetable'
 import StudentTimetable from './pages/StudentPages/StudentTimetable'
 import AdminPanel from './pages/Admin/AdminPanel'
@@ -30,7 +28,7 @@ const App = () => {
     <>
     <BrowserRouter>
     <Routes>
-      <Route path='/login' element={<LoginPage/>}/>
+      <Route path='/' element={<LoginPage/>}/>
       <Route path="/studenthome" element={<ProtectedRoute allowedRoles={["student"]}><StudentHome /></ProtectedRoute>}/>
       <Route path="/teacherhome" element={<ProtectedRoute allowedRoles={["teacher"]}><TeacherHome /></ProtectedRoute>}/>
       <Route path='*' element={<NotFound404/>}/>

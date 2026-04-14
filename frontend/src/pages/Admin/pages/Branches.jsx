@@ -58,7 +58,7 @@ const Branches = ({ data, reload, toast }) => {
       {modal && (
         <Modal title={modal === "edit" ? "Edit Branch" : "Add Branch"} onClose={close} onSave={save}>
           <Field label="Branch Name">
-            <Input value={form.name} onChange={v => setForm(f => ({ ...f, name: v }))} placeholder="e.g. Computer Science" />
+            <Input value={form.name} onChange={v => setForm(f => ({ ...f, name: v }))}  />
           </Field>
         </Modal>
       )}

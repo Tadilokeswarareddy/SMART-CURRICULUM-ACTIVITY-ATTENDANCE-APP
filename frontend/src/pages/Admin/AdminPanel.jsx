@@ -1,5 +1,4 @@
-// src/pages/admin/AdminPanel.jsx
-// ─── Main admin shell: nav, layout, data fetching, page routing ───────────────
+
 import { useEffect, useState, useCallback } from "react"
 import api from "../../api"
 
@@ -17,7 +16,7 @@ import Timetable   from "./pages/Timetable"
 import Messages    from "./pages/Messages"
 import Users       from "./pages/Users"
 
-// ── Nav definition ─────────────────────────────────────────────────────────────
+
 const NAV = [
   { id: "dashboard",   icon: "dashboard",   label: "Dashboard"   },
   { id: "users",       icon: "users",       label: "Users"       },
@@ -32,7 +31,6 @@ const NAV = [
   { id: "messages",    icon: "messages",    label: "Messages"    },
 ]
 
-// ── API endpoints to load in parallel ─────────────────────────────────────────
 const ENDPOINTS = [
   ["/api/branches/",       "branches"],
   ["/api/years/",          "years"],
@@ -46,7 +44,6 @@ const ENDPOINTS = [
   ["/api/register/",       "users"],   
 ]
 
-// ── Main component ─────────────────────────────────────────────────────────────
 const AdminPanel = () => {
   const [page, setPage]       = useState("dashboard")
   const [data, setData]       = useState({})

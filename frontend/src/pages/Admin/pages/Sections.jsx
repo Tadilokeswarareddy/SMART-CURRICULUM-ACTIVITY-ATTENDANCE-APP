@@ -113,7 +113,6 @@ const Sections = ({ data, reload, toast }) => {
             <Input
               value={form.name || ""}
               onChange={v => setForm(f => ({ ...f, name: v }))}
-              placeholder="A"
             />
           </Field>
         </Modal>

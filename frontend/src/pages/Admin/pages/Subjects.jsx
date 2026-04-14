@@ -108,14 +108,14 @@ const Subjects = ({ data, reload, toast }) => {
               <Input
                 value={form.name || ""}
                 onChange={v => setForm(f => ({ ...f, name: v }))}
-                placeholder="Data Structures"
+                
               />
             </Field>
             <Field label="Subject Code">
               <Input
                 value={form.code || ""}
                 onChange={v => setForm(f => ({ ...f, code: v }))}
-                placeholder="CS201"
+                
               />
             </Field>
           </div>
@@ -147,7 +147,7 @@ const Subjects = ({ data, reload, toast }) => {
             <Textarea
               value={form.syllabus_description || ""}
               onChange={v => setForm(f => ({ ...f, syllabus_description: v }))}
-              placeholder="Brief overview of the syllabus…"
+              
             />
           </Field>
         </Modal>

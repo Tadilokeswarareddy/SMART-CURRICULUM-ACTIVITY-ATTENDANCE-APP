@@ -60,10 +60,10 @@ const Messages = ({ data, reload, toast }) => {
       {modal && (
         <Modal title="Send Message" onClose={() => setModal(false)} onSave={save}>
           <Field label="Title">
-            <Input value={form.title} onChange={v => setForm(f => ({ ...f, title: v }))} placeholder="e.g. Exam Schedule Update" />
+            <Input value={form.title} onChange={v => setForm(f => ({ ...f, title: v }))}  />
           </Field>
           <Field label="Message">
-            <Textarea value={form.message} onChange={v => setForm(f => ({ ...f, message: v }))} placeholder="Write your message here…" />
+            <Textarea value={form.message} onChange={v => setForm(f => ({ ...f, message: v }))}  />
           </Field>
           <Field label="Target Section (leave blank to send to everyone)">
             <Select value={form.target_section} onChange={v => setForm(f => ({ ...f, target_section: v }))}>

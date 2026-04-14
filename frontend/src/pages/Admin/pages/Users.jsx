@@ -41,8 +41,6 @@ const Users = ({ data, reload, toast }) => {
       toast(msg)
     }
   }
-
-  // Use data.users directly — this includes ALL users even without profiles
   const allUsers = (data.users || [])
 
   const items = allUsers.filter(u => {
@@ -53,7 +51,6 @@ const Users = ({ data, reload, toast }) => {
     return matchSearch && matchRole
   })
 
-  // Check if a user already has a profile
   const hasStudentProfile = userId =>
     (data.students || []).some(st => st.user === userId)
   const hasTeacherProfile = userId =>
@@ -142,22 +139,22 @@ const Users = ({ data, reload, toast }) => {
 
           <div style={s.formRow}>
             <Field label="First Name">
-              <Input value={form.first_name || ""} onChange={v => setForm(f => ({ ...f, first_name: v }))} placeholder="John" />
+              <Input value={form.first_name || ""} onChange={v => setForm(f => ({ ...f, first_name: v }))}  />
             </Field>
             <Field label="Last Name">
-              <Input value={form.last_name || ""} onChange={v => setForm(f => ({ ...f, last_name: v }))} placeholder="Doe" />
+              <Input value={form.last_name || ""} onChange={v => setForm(f => ({ ...f, last_name: v }))}  />
             </Field>
           </div>
           <div style={s.formRow}>
             <Field label="Username">
-              <Input value={form.username || ""} onChange={v => setForm(f => ({ ...f, username: v }))} placeholder="johndoe" />
+              <Input value={form.username || ""} onChange={v => setForm(f => ({ ...f, username: v }))}  />
             </Field>
             <Field label="Email">
-              <Input type="email" value={form.email || ""} onChange={v => setForm(f => ({ ...f, email: v }))} placeholder="john@uni.edu" />
+              <Input type="email" value={form.email || ""} onChange={v => setForm(f => ({ ...f, email: v }))}  />
             </Field>
           </div>
           <Field label="Password">
-            <Input type="password" value={form.password || ""} onChange={v => setForm(f => ({ ...f, password: v }))} placeholder="Set a password" />
+            <Input type="password" value={form.password || ""} onChange={v => setForm(f => ({ ...f, password: v }))}  />
           </Field>
 
           {form.role === "teacher" && (
