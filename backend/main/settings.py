@@ -2,6 +2,8 @@ from pathlib import Path
 from decouple import config
 from datetime import timedelta
 import os
+import dj_database_url
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -18,7 +20,7 @@ GEMINI_API_KEY = config("GEMINI_API_KEY")
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['*']
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
@@ -52,7 +54,7 @@ INSTALLED_APPS = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
+    os.environ.get('FRONTEND_URL', 'http://localhost:3000'),
 ]
 
 MIDDLEWARE = [
@@ -86,11 +88,12 @@ TEMPLATES = [
 WSGI_APPLICATION = 'main.wsgi.application'
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=os.environ.get('DATABASE_URL'),
+        conn_max_age=600,
+    )
 }
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
