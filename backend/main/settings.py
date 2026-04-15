@@ -55,6 +55,7 @@ INSTALLED_APPS = [
 
 CORS_ALLOWED_ORIGINS = [
     os.environ.get('FRONTEND_URL', 'http://localhost:3000'),
+    'https://localhost:3000',
 ]
 
 MIDDLEWARE = [
