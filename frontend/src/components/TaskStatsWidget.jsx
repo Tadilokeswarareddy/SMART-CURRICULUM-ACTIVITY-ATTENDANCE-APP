@@ -12,7 +12,7 @@ const TaskStatsWidget = ({ refreshTrigger }) => {
   const fetchStats = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/task/stats/", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"}/api/task/stats/`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("access")}` },
       })
       const data = await res.json()

@@ -18,7 +18,7 @@ const SmartTask = ({ onStatsRefresh }) => {
   const getTasks = async () => {
     setLoading(true); setError("");
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/task/generate/", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"}/api/task/generate/`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
       });
@@ -56,7 +56,7 @@ const SmartTask = ({ onStatsRefresh }) => {
     formData.append("file", sub.file);
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/task/submit/", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"}/api/task/submit/`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token()}` },
         body: formData,
@@ -75,7 +75,7 @@ const SmartTask = ({ onStatsRefresh }) => {
 
   const markDone = async (taskId) => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/task/complete/", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"}/api/task/complete/`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
         body: JSON.stringify({ task_id: taskId }),
