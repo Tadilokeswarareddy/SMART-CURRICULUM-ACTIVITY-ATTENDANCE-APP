@@ -27,9 +27,18 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         token = super().get_token(user)
         token['role'] = user.role
         return token
-
+    
+    
     def validate(self, attrs):
-        data = super().validate(attrs)
+        print("🔥 LOGIN DATA RECEIVED:", attrs)   # ✅ ADD THIS
+
+        try:
+            data = super().validate(attrs)
+            print("✅ LOGIN SUCCESS:", attrs.get("username"))  # optional
+        except Exception as e:
+            print("❌ LOGIN FAILED:", attrs)  # VERY IMPORTANT
+            raise e
+
         data['role'] = self.user.role
         return data
 
