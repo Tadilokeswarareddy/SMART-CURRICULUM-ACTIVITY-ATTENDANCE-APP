@@ -88,8 +88,15 @@ class TeachingAssignmentListCreateView(generics.ListCreateAPIView):
 
 
 class TimeTableListCreateView(generics.ListCreateAPIView):
-    queryset = TimeTable.objects.all()
     serializer_class = TimeTableSerializer
+
+    def get_queryset(self):
+        return TimeTable.objects.all().select_related(
+            'assignment__subject',
+            'assignment__section__branch',
+            'assignment__section__year',
+            'assignment__teacher',
+        )
 
 
 
@@ -278,10 +285,16 @@ class StudentTimetableView(APIView):
 
         timetable = TimeTable.objects.filter(
             assignment__section=section
-        ).select_related('assignment__subject', 'assignment__teacher')
+        ).select_related(
+            'assignment__subject',
+            'assignment__teacher',
+            'assignment__section__branch',
+            'assignment__section__year',
+        )
 
         serializer = TimeTableSerializer(timetable, many=True)
         return Response(serializer.data)
+
 
 
 class TeacherTimetableView(APIView):
@@ -295,7 +308,12 @@ class TeacherTimetableView(APIView):
 
         timetable = TimeTable.objects.filter(
             assignment__teacher=teacher_profile
-        ).select_related('assignment__subject', 'assignment__section')
+        ).select_related(
+            'assignment__subject',
+            'assignment__section__branch',
+            'assignment__section__year',
+            'assignment__teacher',
+        )
 
         serializer = TimeTableSerializer(timetable, many=True)
         return Response(serializer.data)
