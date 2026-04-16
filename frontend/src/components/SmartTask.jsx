@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import Pad from '../media/pad.svg';
+
 
 const G = {
   50:"#f0fdf4",100:"#dcfce7",200:"#bbf7d0",300:"#86efac",
@@ -152,7 +152,7 @@ const SmartTask = ({ onStatsRefresh }) => {
   }}
 >
   <img
-    src={Pad}
+    src="/pad.svg"
     alt="Task Icon"
     style={{
       width: 28,
