@@ -2,7 +2,7 @@ import React, { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import api from "../api"
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "../constants"
-import Class from '../media/classbro.svg'
+import classbro from '../media/classbro.svg'
 
 const G = {
   50:"#f0fdf4",100:"#dcfce7",200:"#bbf7d0",300:"#86efac",
@@ -55,7 +55,7 @@ const LoginPage = () => {
             <h1 style={{ margin:"0 0 8px", fontSize:32, fontWeight:700, color:"#fff", fontFamily:"'DM Serif Display',serif", letterSpacing:"-0.5px", position:"relative", zIndex:1 }}>Shusseki</h1>
             <p style={{ margin:"0 0 28px", fontSize:13, color:G[300], fontFamily:"'DM Sans',sans-serif", textAlign:"center", position:"relative", zIndex:1 }}>Smart Attendance &amp; Curriculum Management</p>
             <div style={{ width:180, height:180, borderRadius:18, background:"rgba(255,255,255,0.1)", backdropFilter:"blur(10px)", border:"1px solid rgba(255,255,255,0.2)", display:"flex", alignItems:"center", justifyContent:"center", position:"relative", zIndex:1 }}>
-              <img src={Class} alt="login" style={{ width:"80%", height:"80%", objectFit:"contain" }} />
+              <img src={classbro} alt="login" style={{ width:"80%", height:"80%", objectFit:"contain" }} />
             </div>
           </div>
 
