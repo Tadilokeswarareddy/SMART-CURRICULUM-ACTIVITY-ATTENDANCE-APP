@@ -16,22 +16,36 @@ const LoginPage = () => {
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
 
-  const SendRequest = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    try {
-      const response = await api.post("/api/token/", { username, password })
-      localStorage.setItem(ACCESS_TOKEN, response.data.access)
-      localStorage.setItem(REFRESH_TOKEN, response.data.refresh)
-      const role = response.data.role
-      if (role === "student") navigate("/studenthome")
-      else if (role === "teacher") navigate("/teacherhome")
-      else navigate("/admin")
-    } catch {
-      setError("Invalid username or password")
-    }
-    setLoading(false)
+ const SendRequest = async (e) => {
+  e.preventDefault()
+  setLoading(true)
+
+  // 🔥 ADD THIS CLEANING STEP
+  const cleanedData = {
+    username: username.trim().toLowerCase(),
+    password: password.trim(),
   }
+
+  console.log("Sending:", cleanedData) // for debugging
+
+  try {
+    const response = await api.post("/api/token/", cleanedData)
+
+    localStorage.setItem(ACCESS_TOKEN, response.data.access)
+    localStorage.setItem(REFRESH_TOKEN, response.data.refresh)
+
+    const role = response.data.role
+    if (role === "student") navigate("/studenthome")
+    else if (role === "teacher") navigate("/teacherhome")
+    else navigate("/admin")
+
+  } catch (err) {
+    console.log("ERROR:", err.response?.data) 
+    setError("Invalid username or password")
+  }
+
+  setLoading(false)
+}
 
   return (
     <>
@@ -70,11 +84,11 @@ const LoginPage = () => {
               <form onSubmit={SendRequest} style={{ display:"flex", flexDirection:"column", gap:24 }}>
                 <div>
                   <label style={{ display:"block", fontSize:10, fontWeight:700, color:G[600], textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:6, fontFamily:"'DM Sans',sans-serif" }}>Username</label>
-                  <input type="text" placeholder="Enter your username" value={username} onChange={(e) => setUsername(e.target.value)} className="lp-input" />
+                  <input type="text" autoCapitalize="none" autoCorrect="off" placeholder="Enter your username" value={username} onChange={(e) => setUsername(e.target.value)} className="lp-input" />
                 </div>
                 <div>
                   <label style={{ display:"block", fontSize:10, fontWeight:700, color:G[600], textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:6, fontFamily:"'DM Sans',sans-serif" }}>Password</label>
-                  <input type="password" placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} className="lp-input" />
+                  <input type="password" autoCapitalize="none" autoCorrect="off" placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} className="lp-input" />
                 </div>
 
                 {error && <p style={{ margin:0, fontSize:12, color:"#dc2626", fontFamily:"'DM Sans',sans-serif" }}>{error}</p>}
