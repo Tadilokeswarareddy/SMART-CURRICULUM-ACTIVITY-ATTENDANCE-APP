@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback } from "react"
 import api from "../../api"
 
-import { G, Icon, Toast, Spinner, s } from "./components/shared"
+import { G, Icon, Toast, Spinner, s } from "./components/Shared"
 
 import Dashboard   from "./pages/Dashboard"
 import Teachers    from "./pages/Teachers"
