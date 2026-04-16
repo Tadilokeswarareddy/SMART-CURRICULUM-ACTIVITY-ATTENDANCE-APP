@@ -1,4 +1,4 @@
-// src/pages/admin/components/shared.jsx
+// src/pages/admin/components/Shared.jsx
 // ─── Shared design tokens, icons, and UI primitives ───────────────────────────
 
 export const G = {

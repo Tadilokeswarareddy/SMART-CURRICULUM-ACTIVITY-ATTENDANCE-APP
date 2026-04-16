@@ -4,7 +4,7 @@ import api from "../../../api"
 import {
   PageTitle, CardHeader, SearchBar, Modal, Field, Input, Select,
   TableWrap, EmptyRow, Td, BtnRow, Badge, Icon, s
-} from "../components/shared"
+} from "../components/Shared"
 
 const Sections = ({ data, reload, toast }) => {
   const [modal, setModal]   = useState(null)

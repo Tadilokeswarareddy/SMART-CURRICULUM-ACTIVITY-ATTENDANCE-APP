@@ -1,5 +1,5 @@
 // src/pages/admin/pages/Dashboard.jsx
-import { G, PageTitle, Heading, TableWrap, EmptyRow, Td, Badge, s } from "../components/shared"
+import { G, PageTitle, Heading, TableWrap, EmptyRow, Td, Badge, s } from "../components/Shared"
 
 const Dashboard = ({ data }) => {
   const stats = [

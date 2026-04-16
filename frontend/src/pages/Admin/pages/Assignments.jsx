@@ -4,7 +4,7 @@ import api from "../../../api"
 import {
   PageTitle, CardHeader, SearchBar, Modal, Field, Select,
   TableWrap, EmptyRow, Td, BtnRow, Badge, Icon, sectionLabel, s
-} from "../components/shared"
+} from "../components/Shared"
 
 const Assignments = ({ data, reload, toast }) => {
   const [modal, setModal]   = useState(null)

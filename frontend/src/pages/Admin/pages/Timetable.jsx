@@ -4,7 +4,7 @@ import api from "../../../api"
 import {
   G, PageTitle, CardHeader, SearchBar, Modal, Field, Input, Select,
   TableWrap, EmptyRow, Td, BtnRow, Badge, Icon, sectionLabel, s
-} from "../components/shared"
+} from "../components/Shared"
 
 const DAYS = [
   { value: "mon", label: "Monday" },

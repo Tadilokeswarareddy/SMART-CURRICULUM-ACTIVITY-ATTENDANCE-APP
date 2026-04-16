@@ -4,7 +4,7 @@ import api from "../../../api"
 import {
   G, PageTitle, CardHeader, SearchBar, Modal, Field, Input, Select,
   TableWrap, EmptyRow, Td, Badge, Avatar, Icon, s
-} from "../components/shared"
+} from "../components/Shared"
 
 const DESIGNATIONS = [
   { value: "professor", label: "Professor" },
