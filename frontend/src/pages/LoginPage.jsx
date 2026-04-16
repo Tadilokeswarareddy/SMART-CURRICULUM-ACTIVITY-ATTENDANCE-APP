@@ -2,7 +2,7 @@ import React, { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import api from "../api"
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "../constants"
-import classbro from '../media/classbro.svg'
+import classbro from '../../../frontend/classbro.svg'
 
 const G = {
   50:"#f0fdf4",100:"#dcfce7",200:"#bbf7d0",300:"#86efac",
