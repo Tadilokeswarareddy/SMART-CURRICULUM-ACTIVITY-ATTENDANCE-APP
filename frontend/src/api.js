@@ -3,7 +3,6 @@ import { ACCESS_TOKEN } from './constants'
 
 const BASE_URL = import.meta.env.VITE_API_URL
 
-// This will show in browser console - check this on broken phone
 console.log("🔗 API Base URL:", BASE_URL)
 
 if (!BASE_URL) {
@@ -15,7 +14,7 @@ const api = axios.create({
     headers: {
         "Content-Type": "application/json",
     },
-    timeout: 15000, // 15 second timeout - important for slow mobile networks
+    timeout: 80000,
 })
 
 api.interceptors.request.use(

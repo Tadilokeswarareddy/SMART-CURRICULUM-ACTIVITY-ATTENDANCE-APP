@@ -9,9 +9,9 @@ const G = {
   800: "#166534", 900: "#14532d",
 }
 
-const SESSION_DURATION = 300   // 5 min total
-const QR_INTERVAL      = 30    // rotate QR every 30 s
-const POLL_INTERVAL    = 5000  // poll scans every 5 s
+const SESSION_DURATION = 300   
+const QR_INTERVAL      = 5    
+const POLL_INTERVAL    = 5000  
 
 const fmt     = iso => iso ? new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""
 const fmtDate = d   => d   ? new Date(d).toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" }) : ""
@@ -48,49 +48,35 @@ const card = {
   padding: "26px 24px", marginBottom: 22,
 }
 
-// ═══════════════════════════════════════════════════════════════════
+
 export default function MarkAttendance() {
 
-  // ── assignment selection ───────────────────────────────────────
+
   const [assignments,   setAssignments]   = useState([])
   const [assignmentId,  setAssignmentId]  = useState("")
-
-  // ── active session ─────────────────────────────────────────────
   const [sessionId,     setSessionId]     = useState(null)
   const [qrValue,       setQrValue]       = useState("")
   const [isActive,      setIsActive]      = useState(false)
   const [counter,       setCounter]       = useState(SESSION_DURATION)
   const [qrCounter,     setQrCounter]     = useState(QR_INTERVAL)
   const [sessionErr,    setSessionErr]    = useState("")
-
-  // ── student list + present state ───────────────────────────────
-  const [students,      setStudents]      = useState([])   // [{id, full_name, roll_number}]
-  const [presentIds,    setPresentIds]    = useState([])   // teacher's final selection
-
-  // ── submit ─────────────────────────────────────────────────────
+  const [students,      setStudents]      = useState([])   
+  const [presentIds,    setPresentIds]    = useState([])   
   const [submitting,    setSubmitting]    = useState(false)
   const [submitMsg,     setSubmitMsg]     = useState("")
   const [submitErr,     setSubmitErr]     = useState("")
-
-  // ── history tab ────────────────────────────────────────────────
   const [tab,           setTab]           = useState("attend")
   const [sessions,      setSessions]      = useState([])
   const [sessionDetail, setSessionDetail] = useState(null)
   const [loadingHist,   setLoadingHist]   = useState(false)
   const [loadingDetail, setLoadingDetail] = useState(false)
-
-  // refs to keep intervals stable
   const pollRef     = useRef(null)
   const sessionRef  = useRef(null)
   const qrRotRef    = useRef(null)
   const qrBadgeRef  = useRef(null)
-
-  // ── fetch assignments on mount ─────────────────────────────────
   useEffect(() => {
     api.get("/api/assignments/").then(r => setAssignments(r.data)).catch(console.error)
   }, [])
-
-  // ── when assignment changes, load students ─────────────────────
   useEffect(() => {
     if (!assignmentId) { setStudents([]); return }
     const a = assignments.find(x => x.id === parseInt(assignmentId))
@@ -99,13 +85,9 @@ export default function MarkAttendance() {
       .then(r => setStudents(r.data))
       .catch(console.error)
   }, [assignmentId, assignments])
-
-  // ── history tab load ───────────────────────────────────────────
   useEffect(() => {
     if (tab === "history" && assignmentId) loadHistory()
   }, [tab, assignmentId])
-
-  // ── clear everything when assignment changes ───────────────────
   const resetAll = val => {
     stopAllIntervals()
     setAssignmentId(val)
@@ -124,14 +106,13 @@ export default function MarkAttendance() {
     clearInterval(qrBadgeRef.current)
   }
 
-  // ── poll: who has scanned? ─────────────────────────────────────
   const startPolling = useCallback((sid) => {
     clearInterval(pollRef.current)
     pollRef.current = setInterval(async () => {
       try {
         const r = await api.get(`/api/attendance/session/${sid}/scans/`)
         const scannedIds = r.data.scanned_student_ids || []
-        // merge: if a student scanned, mark present; don't remove manual additions
+
         setPresentIds(prev => {
           const merged = new Set(prev)
           scannedIds.forEach(id => merged.add(id))
@@ -141,7 +122,7 @@ export default function MarkAttendance() {
     }, POLL_INTERVAL)
   }, [])
 
-  // ── session countdown ──────────────────────────────────────────
+
   const startSessionTimer = useCallback(() => {
     clearInterval(sessionRef.current)
     sessionRef.current = setInterval(() => {
@@ -159,7 +140,7 @@ export default function MarkAttendance() {
     }, 1000)
   }, [])
 
-  // ── QR rotation (API) ──────────────────────────────────────────
+
   const startQrRotation = useCallback((sid) => {
     clearInterval(qrRotRef.current)
     qrRotRef.current = setInterval(async () => {
@@ -171,7 +152,7 @@ export default function MarkAttendance() {
     }, QR_INTERVAL * 1000)
   }, [])
 
-  // ── QR badge countdown ─────────────────────────────────────────
+
   const startQrBadge = useCallback(() => {
     clearInterval(qrBadgeRef.current)
     qrBadgeRef.current = setInterval(() => {
@@ -179,7 +160,7 @@ export default function MarkAttendance() {
     }, 1000)
   }, [])
 
-  // ── start session ──────────────────────────────────────────────
+
   const startSession = async () => {
     setSessionErr(""); setSubmitMsg(""); setSubmitErr("")
     try {
@@ -200,7 +181,7 @@ export default function MarkAttendance() {
     }
   }
 
-  // ── submit attendance ──────────────────────────────────────────
+
   const submitAttendance = async () => {
     if (!sessionId) { setSubmitErr("No active session."); return }
     setSubmitting(true); setSubmitMsg(""); setSubmitErr("")
@@ -222,7 +203,7 @@ export default function MarkAttendance() {
   const toggleStudent = id =>
     setPresentIds(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id])
 
-  // ── history ────────────────────────────────────────────────────
+
   const loadHistory = async () => {
     setLoadingHist(true); setSessions([]); setSessionDetail(null)
     try {
@@ -246,7 +227,7 @@ export default function MarkAttendance() {
   const presentCount = presentIds.length
   const absentCount  = students.length - presentCount
 
-  // ── render ─────────────────────────────────────────────────────
+
   return (
     <>
       <style>{`
@@ -262,7 +243,7 @@ export default function MarkAttendance() {
       <div style={{ minHeight: "100vh", background: G[50], fontFamily: "'DM Sans',sans-serif" }}>
         <TeacherNav />
 
-        {/* ── Banner ── */}
+
         <div style={{
           position: "relative",
           background: `linear-gradient(135deg,${G[900]} 0%,${G[700]} 50%,${G[500]} 100%)`,
@@ -285,7 +266,7 @@ export default function MarkAttendance() {
 
         <div style={{ maxWidth: 900, margin: "0 auto", padding: "28px 20px 60px" }}>
 
-          {/* ── Class selector ── */}
+
           <div style={{ ...card, padding: "20px 22px", marginBottom: 18, animation: "fadeUp 0.45s ease both" }}>
             <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: G[600], textTransform: "uppercase", letterSpacing: "1.2px", marginBottom: 10 }}>Select Class</label>
             <select value={assignmentId} onChange={e => resetAll(e.target.value)}
@@ -298,7 +279,7 @@ export default function MarkAttendance() {
             </select>
           </div>
 
-          {/* ── Tabs ── */}
+
           {assignmentId && (
             <div style={{ display: "flex", gap: 0, borderBottom: `2px solid ${G[100]}`, marginBottom: 22, animation: "fadeUp 0.45s ease both", animationDelay: "0.05s" }}>
               {[["attend", "Take Attendance"], ["history", "History"]].map(([key, label]) => (
@@ -315,9 +296,7 @@ export default function MarkAttendance() {
             </div>
           )}
 
-          {/* ═══════════════════════════════════════════════
-              TAKE ATTENDANCE TAB
-          ═══════════════════════════════════════════════ */}
+
           {assignmentId && tab === "attend" && (
             <>
               <ErrBox msg={sessionErr} />
@@ -325,7 +304,7 @@ export default function MarkAttendance() {
               <ErrBox msg={submitErr} />
 
               {!isActive && !sessionId && !submitMsg && (
-                /* ── Start prompt ── */
+
                 <div style={{ ...card, textAlign: "center", padding: "40px 24px", animation: "fadeUp 0.4s ease both" }}>
                   <div style={{ fontSize: 36, marginBottom: 16 }}>📋</div>
                   <p style={{ color: "#6b7280", fontSize: 14, marginBottom: 24, maxWidth: 360, margin: "0 auto 24px", lineHeight: 1.6 }}>
@@ -341,14 +320,13 @@ export default function MarkAttendance() {
               )}
 
               {(isActive || (sessionId && !submitMsg)) && (
-                /* ── Active session: QR + list side by side ── */
+
                 <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1.6fr)", gap: 18, animation: "fadeUp 0.4s ease both", alignItems: "start" }}>
 
-                  {/* LEFT — QR panel */}
+
                   <div style={{ ...card, marginBottom: 0, textAlign: "center" }}>
                     <Heading label="QR Code" />
 
-                    {/* Session countdown ring */}
                     <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 16, marginBottom: 18 }}>
                       <svg width="52" height="52" viewBox="0 0 60 60" style={{ transform: "rotate(-90deg)", flexShrink: 0 }}>
                         <circle cx="30" cy="30" r="25" fill="none" stroke={G[100]} strokeWidth="4" />
@@ -364,13 +342,14 @@ export default function MarkAttendance() {
                       </div>
                     </div>
 
-                    {/* QR code */}
+  
                     {isActive && qrValue && (
                       <div style={{ position: "relative", display: "inline-block", marginBottom: 12 }}>
                         <div style={{ padding: 12, background: G[50], borderRadius: 14, border: `1.5px solid ${G[200]}` }}>
                           <QRCodeCanvas value={qrValue} size={180} key={qrValue} />
                         </div>
-                        {/* Rotation badge */}
+
+
                         <div style={{
                           position: "absolute", top: -10, right: -10,
                           background: qrCounter <= 5 ? "#dc2626" : G[700],
@@ -396,7 +375,6 @@ export default function MarkAttendance() {
                       Polls for new scans every <strong style={{ color: G[700] }}>5s</strong>
                     </p>
 
-                    {/* Stats pills */}
                     <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 18 }}>
                       <div style={{ background: G[100], borderRadius: 10, padding: "8px 14px", textAlign: "center" }}>
                         <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: G[700], fontFamily: "'DM Serif Display',serif" }}>{presentCount}</p>
@@ -413,7 +391,7 @@ export default function MarkAttendance() {
                     </div>
                   </div>
 
-                  {/* RIGHT — Student list */}
+
                   <div style={{ ...card, marginBottom: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
                       <Heading label="Student List" />
@@ -467,7 +445,7 @@ export default function MarkAttendance() {
                       </div>
                     )}
 
-                    {/* Submit button */}
+
                     <button onClick={submitAttendance} disabled={submitting || students.length === 0}
                       style={{
                         width: "100%", background: G[700], color: "#fff", border: "none",
@@ -487,9 +465,7 @@ export default function MarkAttendance() {
             </>
           )}
 
-          {/* ═══════════════════════════════════════════════
-              HISTORY TAB
-          ═══════════════════════════════════════════════ */}
+
           {assignmentId && tab === "history" && (
             <div style={{ ...card, animation: "fadeUp 0.4s ease both" }}>
               <Heading label="Attendance History" />
