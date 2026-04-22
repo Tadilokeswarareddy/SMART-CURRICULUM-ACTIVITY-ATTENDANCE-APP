@@ -47,6 +47,7 @@ const card = {
   padding: "26px 24px", marginBottom: 22,
 }
 
+// ── QR Fullscreen Modal ──────────────────────────────────────────────────────
 const QRModal = ({ value, onClose, qrCounter }) => {
   useEffect(() => {
     const handler = e => { if (e.key === "Escape") onClose() }
@@ -74,6 +75,7 @@ const QRModal = ({ value, onClose, qrCounter }) => {
           position: "relative",
         }}
       >
+        {/* Close button */}
         <button
           onClick={onClose}
           style={{
@@ -91,7 +93,7 @@ const QRModal = ({ value, onClose, qrCounter }) => {
 
         <div style={{ padding: 16, background: G[50], borderRadius: 16, border: `2px solid ${G[200]}`, position: "relative" }}>
           <QRCodeCanvas value={value} size={320} key={value} />
-
+          {/* Refresh badge */}
           <div style={{
             position: "absolute", top: -12, right: -12,
             background: qrCounter <= 2 ? "#dc2626" : G[700],
@@ -113,31 +115,100 @@ const QRModal = ({ value, onClose, qrCounter }) => {
   )
 }
 
+// ── Live Scan Feed ────────────────────────────────────────────────────────────
 const LiveFeed = ({ presentIds, students }) => {
+  const [open, setOpen] = useState(false)
   const presentStudents = students.filter(s => presentIds.includes(s.id))
+  const absentStudents  = students.filter(s => !presentIds.includes(s.id))
+
   if (presentStudents.length === 0) return null
 
   return (
-    <div style={{
-      background: G[50], border: `1.5px solid ${G[200]}`, borderRadius: 14,
-      padding: "14px 16px", marginTop: 14,
-    }}>
-      <p style={{ margin: "0 0 10px", fontSize: 11, fontWeight: 700, color: G[600], letterSpacing: "1.2px", textTransform: "uppercase" }}>
-        ✅ Scanned In ({presentStudents.length})
-      </p>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-        {presentStudents.map(s => (
-          <div key={s.id} style={{
-            background: "#fff", border: `1.5px solid ${G[300]}`, borderRadius: 999,
-            padding: "4px 12px", fontSize: 12, fontWeight: 600, color: G[800],
-            display: "flex", alignItems: "center", gap: 6,
-            animation: "fadeUp 0.3s ease",
-          }}>
-            <span style={{ width: 7, height: 7, borderRadius: "50%", background: G[500], display: "inline-block" }} />
-            {s.full_name}
+    <div style={{ marginBottom: 16 }}>
+      {/* Toggle button */}
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{
+          display: "flex", alignItems: "center", gap: 8,
+          width: "100%", background: open ? G[700] : "#fff",
+          border: `1.5px solid ${open ? G[700] : G[300]}`,
+          borderRadius: open ? "12px 12px 0 0" : 12,
+          padding: "10px 16px", cursor: "pointer",
+          fontFamily: "'DM Sans',sans-serif", transition: "all 0.18s",
+        }}
+      >
+        <span style={{
+          width: 8, height: 8, borderRadius: "50%",
+          background: open ? "#fff" : G[500],
+          display: "inline-block", flexShrink: 0,
+          boxShadow: open ? "none" : `0 0 0 3px ${G[100]}`,
+        }} />
+        <span style={{ flex: 1, textAlign: "left", fontSize: 13, fontWeight: 700, color: open ? "#fff" : G[800] }}>
+          QR Scanned — {presentStudents.length} student{presentStudents.length !== 1 ? "s" : ""} marked present
+        </span>
+        <span style={{ fontSize: 11, color: open ? G[200] : "#9ca3af", fontWeight: 600 }}>
+          {open ? "▲ Hide" : "▼ Show"}
+        </span>
+      </button>
+
+      {/* Expanded panel */}
+      {open && (
+        <div style={{
+          border: `1.5px solid ${G[300]}`, borderTop: "none",
+          borderRadius: "0 0 12px 12px",
+          background: "#fff", padding: "16px",
+          animation: "fadeUp 0.18s ease",
+        }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            {/* Present column */}
+            <div>
+              <p style={{ margin: "0 0 8px", fontSize: 10, fontWeight: 700, color: G[600], letterSpacing: "1.2px", textTransform: "uppercase" }}>
+                ✅ Present ({presentStudents.length})
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                {presentStudents.map(s => (
+                  <div key={s.id} style={{
+                    background: G[50], border: `1.5px solid ${G[200]}`,
+                    borderRadius: 8, padding: "7px 10px",
+                    display: "flex", alignItems: "center", gap: 8,
+                    animation: "fadeUp 0.25s ease",
+                  }}>
+                    <span style={{ width: 7, height: 7, borderRadius: "50%", background: G[500], flexShrink: 0 }} />
+                    <div>
+                      <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: G[800] }}>{s.full_name}</p>
+                      <p style={{ margin: 0, fontSize: 10, color: "#9ca3af" }}>{s.roll_number}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Absent column */}
+            <div>
+              <p style={{ margin: "0 0 8px", fontSize: 10, fontWeight: 700, color: "#dc2626", letterSpacing: "1.2px", textTransform: "uppercase" }}>
+                ❌ Not yet scanned ({absentStudents.length})
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                {absentStudents.map(s => (
+                  <div key={s.id} style={{
+                    background: "#fef2f2", border: "1.5px solid #fecaca",
+                    borderRadius: 8, padding: "7px 10px",
+                    display: "flex", alignItems: "center", gap: 8,
+                  }}>
+                    <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#fca5a5", flexShrink: 0 }} />
+                    <div>
+                      <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: "#991b1b" }}>{s.full_name}</p>
+                      <p style={{ margin: 0, fontSize: 10, color: "#f87171" }}>{s.roll_number}</p>
+                    </div>
+                  </div>
+                ))}
+                {absentStudents.length === 0 && (
+                  <p style={{ fontSize: 12, color: G[600], fontWeight: 600, margin: 0 }}>🎉 Everyone scanned!</p>
+                )}
+              </div>
+            </div>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -500,8 +571,6 @@ export default function MarkAttendance() {
                           }}>⛶ Click to expand</div>
                         </div>
 
-                        {/* Live scan feed */}
-                        <LiveFeed presentIds={presentIds} students={students} />
                       </>
                     )}
 
@@ -528,6 +597,10 @@ export default function MarkAttendance() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Right column: LiveFeed + Student List */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+                  <LiveFeed presentIds={presentIds} students={students} />
 
                   {/* Student List Panel */}
                   <div style={{ ...card, marginBottom: 0 }}>
@@ -603,6 +676,7 @@ export default function MarkAttendance() {
                     <p style={{ fontSize: 11, color: "#9ca3af", textAlign: "center", margin: "8px 0 0" }}>
                       Submitting will close the session and save to records.
                     </p>
+                  </div>
                   </div>
                 </div>
               )}
