@@ -9,14 +9,13 @@ const G = {
   800: "#166534", 900: "#14532d",
 }
 
-const SESSION_DURATION = 300   
-const QR_INTERVAL      = 5    
-const POLL_INTERVAL    = 5000  
+const SESSION_DURATION = 300
+const QR_INTERVAL      = 5
+const POLL_INTERVAL    = 5000
 
 const fmt     = iso => iso ? new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""
 const fmtDate = d   => d   ? new Date(d).toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" }) : ""
 const pct     = (a, b) => b > 0 ? Math.round((a / b) * 100) : 0
-
 
 const Heading = ({ label }) => (
   <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
@@ -48,11 +47,105 @@ const card = {
   padding: "26px 24px", marginBottom: 22,
 }
 
+const QRModal = ({ value, onClose, qrCounter }) => {
+  useEffect(() => {
+    const handler = e => { if (e.key === "Escape") onClose() }
+    window.addEventListener("keydown", handler)
+    return () => window.removeEventListener("keydown", handler)
+  }, [onClose])
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed", inset: 0, zIndex: 9999,
+        background: "rgba(0,0,0,0.85)", backdropFilter: "blur(6px)",
+        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+        animation: "fadeIn 0.18s ease",
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          background: "#fff", borderRadius: 24, padding: "36px 40px",
+          display: "flex", flexDirection: "column", alignItems: "center", gap: 18,
+          boxShadow: "0 32px 80px rgba(0,0,0,0.4)",
+          animation: "popIn 0.22s ease",
+          position: "relative",
+        }}
+      >
+        <button
+          onClick={onClose}
+          style={{
+            position: "absolute", top: 14, right: 14,
+            background: G[100], border: "none", borderRadius: "50%",
+            width: 32, height: 32, cursor: "pointer",
+            fontSize: 16, color: G[700], display: "flex", alignItems: "center", justifyContent: "center",
+            fontWeight: 700,
+          }}
+        >✕</button>
+
+        <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: G[600], letterSpacing: "1.5px", textTransform: "uppercase" }}>
+          Scan to Mark Attendance
+        </p>
+
+        <div style={{ padding: 16, background: G[50], borderRadius: 16, border: `2px solid ${G[200]}`, position: "relative" }}>
+          <QRCodeCanvas value={value} size={320} key={value} />
+
+          <div style={{
+            position: "absolute", top: -12, right: -12,
+            background: qrCounter <= 2 ? "#dc2626" : G[700],
+            color: "#fff", borderRadius: "50%", width: 44, height: 44,
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+            fontSize: 15, fontWeight: 700, lineHeight: 1,
+            boxShadow: "0 2px 10px rgba(0,0,0,0.25)", transition: "background 0.3s",
+          }}>
+            {qrCounter}
+            <span style={{ fontSize: 8, opacity: 0.85 }}>sec</span>
+          </div>
+        </div>
+
+        <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>
+          QR refreshes every <strong style={{ color: G[700] }}>{QR_INTERVAL}s</strong> · Press <kbd style={{ background: "#f3f4f6", borderRadius: 4, padding: "1px 5px", fontSize: 11 }}>Esc</kbd> or click outside to close
+        </p>
+      </div>
+    </div>
+  )
+}
+
+const LiveFeed = ({ presentIds, students }) => {
+  const presentStudents = students.filter(s => presentIds.includes(s.id))
+  if (presentStudents.length === 0) return null
+
+  return (
+    <div style={{
+      background: G[50], border: `1.5px solid ${G[200]}`, borderRadius: 14,
+      padding: "14px 16px", marginTop: 14,
+    }}>
+      <p style={{ margin: "0 0 10px", fontSize: 11, fontWeight: 700, color: G[600], letterSpacing: "1.2px", textTransform: "uppercase" }}>
+        ✅ Scanned In ({presentStudents.length})
+      </p>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+        {presentStudents.map(s => (
+          <div key={s.id} style={{
+            background: "#fff", border: `1.5px solid ${G[300]}`, borderRadius: 999,
+            padding: "4px 12px", fontSize: 12, fontWeight: 600, color: G[800],
+            display: "flex", alignItems: "center", gap: 6,
+            animation: "fadeUp 0.3s ease",
+          }}>
+            <span style={{ width: 7, height: 7, borderRadius: "50%", background: G[500], display: "inline-block" }} />
+            {s.full_name}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 
 export default function MarkAttendance() {
-
-
   const [assignments,   setAssignments]   = useState([])
+  const [loadingAssign, setLoadingAssign] = useState(true)   // ← loading state
   const [assignmentId,  setAssignmentId]  = useState("")
   const [sessionId,     setSessionId]     = useState(null)
   const [qrValue,       setQrValue]       = useState("")
@@ -60,8 +153,9 @@ export default function MarkAttendance() {
   const [counter,       setCounter]       = useState(SESSION_DURATION)
   const [qrCounter,     setQrCounter]     = useState(QR_INTERVAL)
   const [sessionErr,    setSessionErr]    = useState("")
-  const [students,      setStudents]      = useState([])   
-  const [presentIds,    setPresentIds]    = useState([])   
+  const [students,      setStudents]      = useState([])
+  const [loadingStudents, setLoadingStudents] = useState(false)  // ← loading state
+  const [presentIds,    setPresentIds]    = useState([])
   const [submitting,    setSubmitting]    = useState(false)
   const [submitMsg,     setSubmitMsg]     = useState("")
   const [submitErr,     setSubmitErr]     = useState("")
@@ -70,24 +164,38 @@ export default function MarkAttendance() {
   const [sessionDetail, setSessionDetail] = useState(null)
   const [loadingHist,   setLoadingHist]   = useState(false)
   const [loadingDetail, setLoadingDetail] = useState(false)
+  const [qrModalOpen,   setQrModalOpen]   = useState(false)   // ← QR modal
+
   const pollRef     = useRef(null)
   const sessionRef  = useRef(null)
   const qrRotRef    = useRef(null)
   const qrBadgeRef  = useRef(null)
+
+  // ── Fetch assignments + all sections in parallel on mount ──────────────────
   useEffect(() => {
-    api.get("/api/assignments/").then(r => setAssignments(r.data)).catch(console.error)
+    setLoadingAssign(true)
+    api.get("/api/assignments/")
+      .then(r => setAssignments(r.data))
+      .catch(console.error)
+      .finally(() => setLoadingAssign(false))
   }, [])
+
+  // ── Fetch students when assignment changes ─────────────────────────────────
   useEffect(() => {
     if (!assignmentId) { setStudents([]); return }
     const a = assignments.find(x => x.id === parseInt(assignmentId))
     if (!a) return
+    setLoadingStudents(true)
     api.get(`/api/sections/${a.section.id}/students/`)
       .then(r => setStudents(r.data))
       .catch(console.error)
+      .finally(() => setLoadingStudents(false))
   }, [assignmentId, assignments])
+
   useEffect(() => {
     if (tab === "history" && assignmentId) loadHistory()
   }, [tab, assignmentId])
+
   const resetAll = val => {
     stopAllIntervals()
     setAssignmentId(val)
@@ -97,6 +205,7 @@ export default function MarkAttendance() {
     setPresentIds([])
     setSessions([]); setSessionDetail(null)
     setTab("attend")
+    setQrModalOpen(false)
   }
 
   const stopAllIntervals = () => {
@@ -112,7 +221,6 @@ export default function MarkAttendance() {
       try {
         const r = await api.get(`/api/attendance/session/${sid}/scans/`)
         const scannedIds = r.data.scanned_student_ids || []
-
         setPresentIds(prev => {
           const merged = new Set(prev)
           scannedIds.forEach(id => merged.add(id))
@@ -121,7 +229,6 @@ export default function MarkAttendance() {
       } catch (e) { console.error("poll error", e) }
     }, POLL_INTERVAL)
   }, [])
-
 
   const startSessionTimer = useCallback(() => {
     clearInterval(sessionRef.current)
@@ -133,13 +240,13 @@ export default function MarkAttendance() {
           clearInterval(qrBadgeRef.current)
           clearInterval(pollRef.current)
           setIsActive(false); setQrValue("")
+          setQrModalOpen(false)
           return 0
         }
         return p - 1
       })
     }, 1000)
   }, [])
-
 
   const startQrRotation = useCallback((sid) => {
     clearInterval(qrRotRef.current)
@@ -152,14 +259,12 @@ export default function MarkAttendance() {
     }, QR_INTERVAL * 1000)
   }, [])
 
-
   const startQrBadge = useCallback(() => {
     clearInterval(qrBadgeRef.current)
     qrBadgeRef.current = setInterval(() => {
       setQrCounter(p => p <= 1 ? QR_INTERVAL : p - 1)
     }, 1000)
   }, [])
-
 
   const startSession = async () => {
     setSessionErr(""); setSubmitMsg(""); setSubmitErr("")
@@ -181,7 +286,6 @@ export default function MarkAttendance() {
     }
   }
 
-
   const submitAttendance = async () => {
     if (!sessionId) { setSubmitErr("No active session."); return }
     setSubmitting(true); setSubmitMsg(""); setSubmitErr("")
@@ -192,6 +296,7 @@ export default function MarkAttendance() {
       })
       stopAllIntervals()
       setIsActive(false); setQrValue("")
+      setQrModalOpen(false)
       setSubmitMsg(`Attendance submitted! ${presentIds.length} present, ${students.length - presentIds.length} absent.`)
       setSessionId(null)
     } catch (e) {
@@ -202,7 +307,6 @@ export default function MarkAttendance() {
 
   const toggleStudent = id =>
     setPresentIds(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id])
-
 
   const loadHistory = async () => {
     setLoadingHist(true); setSessions([]); setSessionDetail(null)
@@ -223,27 +327,35 @@ export default function MarkAttendance() {
   }
 
   const selectedAssignment = assignments.find(a => a.id === parseInt(assignmentId))
-  const sessionPct = Math.round((counter / SESSION_DURATION) * 100)
+  const sessionPct   = Math.round((counter / SESSION_DURATION) * 100)
   const presentCount = presentIds.length
   const absentCount  = students.length - presentCount
-
 
   return (
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap');
-        @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes fadeUp  { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes fadeIn  { from{opacity:0} to{opacity:1} }
+        @keyframes popIn   { from{opacity:0;transform:scale(0.88)} to{opacity:1;transform:scale(1)} }
         .ma-tab-active  { border-bottom:2px solid ${G[700]}!important; color:${G[700]}!important; }
         .ma-tab:hover   { color:${G[600]}!important; }
         .ma-row:hover   { border-color:${G[300]}!important; }
         .ma-session:hover { border-color:${G[300]}!important; }
         .ma-select:focus  { border-color:${G[400]}!important; box-shadow:0 0 0 3px ${G[100]}!important; outline:none; }
+        .qr-hover:hover { transform:scale(1.02); box-shadow:0 8px 24px rgba(21,128,61,0.18)!important; }
+        .qr-hover { transition: transform 0.15s, box-shadow 0.15s; }
       `}</style>
+
+      {/* QR Fullscreen Modal */}
+      {qrModalOpen && qrValue && (
+        <QRModal value={qrValue} qrCounter={qrCounter} onClose={() => setQrModalOpen(false)} />
+      )}
 
       <div style={{ minHeight: "100vh", background: G[50], fontFamily: "'DM Sans',sans-serif" }}>
         <TeacherNav />
 
-
+        {/* Header */}
         <div style={{
           position: "relative",
           background: `linear-gradient(135deg,${G[900]} 0%,${G[700]} 50%,${G[500]} 100%)`,
@@ -266,20 +378,30 @@ export default function MarkAttendance() {
 
         <div style={{ maxWidth: 900, margin: "0 auto", padding: "28px 20px 60px" }}>
 
-
+          {/* Class selector */}
           <div style={{ ...card, padding: "20px 22px", marginBottom: 18, animation: "fadeUp 0.45s ease both" }}>
             <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: G[600], textTransform: "uppercase", letterSpacing: "1.2px", marginBottom: 10 }}>Select Class</label>
-            <select value={assignmentId} onChange={e => resetAll(e.target.value)}
-              className="ma-select"
-              style={{ width: "100%", maxWidth: 440, border: `1.5px solid ${G[200]}`, borderRadius: 10, padding: "10px 14px", fontSize: 14, color: G[900], background: G[50], cursor: "pointer", fontFamily: "'DM Sans',sans-serif", transition: "border-color 0.2s,box-shadow 0.2s" }}>
-              <option value="">— Pick a class —</option>
-              {assignments.map(a => (
-                <option key={a.id} value={a.id}>{a.subject.name} — {a.section.branch.name} {a.section.name}</option>
-              ))}
-            </select>
+            {loadingAssign ? (
+              <div style={{ display: "flex", alignItems: "center", gap: 10, color: "#9ca3af", fontSize: 13 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" style={{ animation: "spin 1s linear infinite" }}>
+                  <circle cx="12" cy="12" r="10" fill="none" stroke={G[300]} strokeWidth="3" />
+                  <path d="M12 2a10 10 0 0 1 10 10" fill="none" stroke={G[600]} strokeWidth="3" strokeLinecap="round" />
+                </svg>
+                Loading classes…
+              </div>
+            ) : (
+              <select value={assignmentId} onChange={e => resetAll(e.target.value)}
+                className="ma-select"
+                style={{ width: "100%", maxWidth: 440, border: `1.5px solid ${G[200]}`, borderRadius: 10, padding: "10px 14px", fontSize: 14, color: G[900], background: G[50], cursor: "pointer", fontFamily: "'DM Sans',sans-serif", transition: "border-color 0.2s,box-shadow 0.2s" }}>
+                <option value="">— Pick a class —</option>
+                {assignments.map(a => (
+                  <option key={a.id} value={a.id}>{a.subject.name} — {a.section.branch.name} {a.section.name}</option>
+                ))}
+              </select>
+            )}
           </div>
 
-
+          {/* Tabs */}
           {assignmentId && (
             <div style={{ display: "flex", gap: 0, borderBottom: `2px solid ${G[100]}`, marginBottom: 22, animation: "fadeUp 0.45s ease both", animationDelay: "0.05s" }}>
               {[["attend", "Take Attendance"], ["history", "History"]].map(([key, label]) => (
@@ -296,7 +418,7 @@ export default function MarkAttendance() {
             </div>
           )}
 
-
+          {/* ── Take Attendance Tab ─────────────────────────────────────────── */}
           {assignmentId && tab === "attend" && (
             <>
               <ErrBox msg={sessionErr} />
@@ -304,13 +426,11 @@ export default function MarkAttendance() {
               <ErrBox msg={submitErr} />
 
               {!isActive && !sessionId && !submitMsg && (
-
                 <div style={{ ...card, textAlign: "center", padding: "40px 24px", animation: "fadeUp 0.4s ease both" }}>
                   <div style={{ fontSize: 36, marginBottom: 16 }}>📋</div>
                   <p style={{ color: "#6b7280", fontSize: 14, marginBottom: 24, maxWidth: 360, margin: "0 auto 24px", lineHeight: 1.6 }}>
                     Start a session for <strong style={{ color: G[700] }}>{selectedAssignment?.section.branch.name} {selectedAssignment?.section.name}</strong>.
-                    A QR code will appear alongside the student list. Students scan → they flip to Present.
-                    You can manually toggle anyone before submitting.
+                    A QR code will appear — students scan to flip Present. Click the QR to expand it for a projector.
                   </p>
                   <button onClick={startSession}
                     style={{ background: G[700], color: "#fff", border: "none", borderRadius: 10, padding: "12px 28px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>
@@ -320,13 +440,13 @@ export default function MarkAttendance() {
               )}
 
               {(isActive || (sessionId && !submitMsg)) && (
-
                 <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1.6fr)", gap: 18, animation: "fadeUp 0.4s ease both", alignItems: "start" }}>
 
-
+                  {/* QR Panel */}
                   <div style={{ ...card, marginBottom: 0, textAlign: "center" }}>
                     <Heading label="QR Code" />
 
+                    {/* Session timer ring */}
                     <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 16, marginBottom: 18 }}>
                       <svg width="52" height="52" viewBox="0 0 60 60" style={{ transform: "rotate(-90deg)", flexShrink: 0 }}>
                         <circle cx="30" cy="30" r="25" fill="none" stroke={G[100]} strokeWidth="4" />
@@ -342,26 +462,47 @@ export default function MarkAttendance() {
                       </div>
                     </div>
 
-  
+                    {/* Clickable QR */}
                     {isActive && qrValue && (
-                      <div style={{ position: "relative", display: "inline-block", marginBottom: 12 }}>
-                        <div style={{ padding: 12, background: G[50], borderRadius: 14, border: `1.5px solid ${G[200]}` }}>
-                          <QRCodeCanvas value={qrValue} size={180} key={qrValue} />
+                      <>
+                        <div
+                          onClick={() => setQrModalOpen(true)}
+                          className="qr-hover"
+                          title="Click to expand for projector"
+                          style={{
+                            position: "relative", display: "inline-block", marginBottom: 8,
+                            cursor: "pointer",
+                          }}
+                        >
+                          <div style={{ padding: 12, background: G[50], borderRadius: 14, border: `1.5px solid ${G[200]}` }}>
+                            <QRCodeCanvas value={qrValue} size={180} key={qrValue} />
+                          </div>
+
+                          {/* Refresh countdown badge */}
+                          <div style={{
+                            position: "absolute", top: -10, right: -10,
+                            background: qrCounter <= 2 ? "#dc2626" : G[700],
+                            color: "#fff", borderRadius: "50%", width: 36, height: 36,
+                            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                            fontSize: 13, fontWeight: 700, lineHeight: 1,
+                            boxShadow: "0 2px 8px rgba(0,0,0,0.2)", transition: "background 0.3s",
+                          }}>
+                            {qrCounter}
+                            <span style={{ fontSize: 7, opacity: 0.85 }}>sec</span>
+                          </div>
+
+                          {/* Expand hint */}
+                          <div style={{
+                            position: "absolute", bottom: -10, left: "50%", transform: "translateX(-50%)",
+                            background: G[700], color: "#fff", borderRadius: 999,
+                            padding: "2px 10px", fontSize: 10, fontWeight: 700, whiteSpace: "nowrap",
+                            boxShadow: "0 2px 6px rgba(0,0,0,0.18)",
+                          }}>⛶ Click to expand</div>
                         </div>
 
-
-                        <div style={{
-                          position: "absolute", top: -10, right: -10,
-                          background: qrCounter <= 5 ? "#dc2626" : G[700],
-                          color: "#fff", borderRadius: "50%", width: 36, height: 36,
-                          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                          fontSize: 13, fontWeight: 700, lineHeight: 1,
-                          boxShadow: "0 2px 8px rgba(0,0,0,0.2)", transition: "background 0.3s",
-                        }}>
-                          {qrCounter}
-                          <span style={{ fontSize: 7, opacity: 0.85 }}>sec</span>
-                        </div>
-                      </div>
+                        {/* Live scan feed */}
+                        <LiveFeed presentIds={presentIds} students={students} />
+                      </>
                     )}
 
                     {!isActive && sessionId && (
@@ -370,12 +511,9 @@ export default function MarkAttendance() {
                       </div>
                     )}
 
-                    <p style={{ fontSize: 11, color: "#9ca3af", margin: "0 0 4px" }}>Rotates every <strong style={{ color: G[700] }}>{QR_INTERVAL}s</strong></p>
-                    <p style={{ fontSize: 11, color: "#9ca3af", margin: "0 0 16px" }}>
-                      Polls for new scans every <strong style={{ color: G[700] }}>5s</strong>
-                    </p>
+                    <p style={{ fontSize: 11, color: "#9ca3af", margin: "14px 0 4px" }}>Rotates every <strong style={{ color: G[700] }}>{QR_INTERVAL}s</strong></p>
 
-                    <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 18 }}>
+                    <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 14 }}>
                       <div style={{ background: G[100], borderRadius: 10, padding: "8px 14px", textAlign: "center" }}>
                         <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: G[700], fontFamily: "'DM Serif Display',serif" }}>{presentCount}</p>
                         <p style={{ margin: 0, fontSize: 10, color: G[600] }}>Present</p>
@@ -391,7 +529,7 @@ export default function MarkAttendance() {
                     </div>
                   </div>
 
-
+                  {/* Student List Panel */}
                   <div style={{ ...card, marginBottom: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
                       <Heading label="Student List" />
@@ -407,7 +545,15 @@ export default function MarkAttendance() {
                       Students who scan the QR flip to <strong style={{ color: G[700] }}>Present</strong> automatically. Toggle anyone to override.
                     </p>
 
-                    {students.length === 0 ? (
+                    {loadingStudents ? (
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, padding: "28px 0", color: "#9ca3af", fontSize: 13 }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" style={{ animation: "spin 1s linear infinite" }}>
+                          <circle cx="12" cy="12" r="10" fill="none" stroke={G[200]} strokeWidth="3" />
+                          <path d="M12 2a10 10 0 0 1 10 10" fill="none" stroke={G[500]} strokeWidth="3" strokeLinecap="round" />
+                        </svg>
+                        Loading students…
+                      </div>
+                    ) : students.length === 0 ? (
                       <p style={{ color: "#9ca3af", fontSize: 13, textAlign: "center", padding: "24px 0" }}>No students found in this section.</p>
                     ) : (
                       <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 380, overflowY: "auto", marginBottom: 18, paddingRight: 2 }}>
@@ -423,7 +569,6 @@ export default function MarkAttendance() {
                                 cursor: "pointer", transition: "all 0.12s",
                               }}>
                               <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
-                                {/* Checkbox */}
                                 <div style={{
                                   width: 17, height: 17, borderRadius: 5,
                                   border: `2px solid ${present ? G[600] : G[300]}`,
@@ -445,7 +590,6 @@ export default function MarkAttendance() {
                       </div>
                     )}
 
-
                     <button onClick={submitAttendance} disabled={submitting || students.length === 0}
                       style={{
                         width: "100%", background: G[700], color: "#fff", border: "none",
@@ -465,7 +609,7 @@ export default function MarkAttendance() {
             </>
           )}
 
-
+          {/* ── History Tab ─────────────────────────────────────────────────── */}
           {assignmentId && tab === "history" && (
             <div style={{ ...card, animation: "fadeUp 0.4s ease both" }}>
               <Heading label="Attendance History" />
@@ -544,6 +688,9 @@ export default function MarkAttendance() {
           )}
         </div>
       </div>
+
+      {/* Spinner keyframe — injected inline since we can't use a CSS file */}
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </>
   )
 }
