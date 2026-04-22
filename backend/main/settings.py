@@ -55,14 +55,22 @@ INSTALLED_APPS = [
 
 CORS_ALLOW_ALL_ORIGINS = False
 
-frontend_url = os.environ.get("FRONTEND_URL")
+frontend_url = os.environ.get("FRONTEND_URL", "").rstrip("/")
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    "http://localhost:5173",
 ]
+
 
 if frontend_url:
     CORS_ALLOWED_ORIGINS.append(frontend_url)
+
+
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://.*\.vercel\.app$",
+]
+
 
 CORS_ALLOW_CREDENTIALS = True
 
@@ -137,3 +145,12 @@ CSRF_COOKIE_SECURE = True
 
 SECURE_SSL_REDIRECT = True
 
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'origin',
+    'x-csrftoken',
+    'x-requested-with',
+]

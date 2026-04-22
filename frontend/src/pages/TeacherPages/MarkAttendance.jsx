@@ -3,7 +3,6 @@ import { QRCodeCanvas } from "qrcode.react"
 import TeacherNav from "../../components/TeacherNav"
 import api from "../../api"
 
-// ─── colour tokens (green ramp) ──────────────────────────────────
 const G = {
   50: "#f0fdf4", 100: "#dcfce7", 200: "#bbf7d0", 300: "#86efac",
   400: "#4ade80", 500: "#22c55e", 600: "#16a34a", 700: "#15803d",
@@ -14,12 +13,11 @@ const SESSION_DURATION = 300   // 5 min total
 const QR_INTERVAL      = 30    // rotate QR every 30 s
 const POLL_INTERVAL    = 5000  // poll scans every 5 s
 
-// ─── tiny helpers ────────────────────────────────────────────────
 const fmt     = iso => iso ? new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""
 const fmtDate = d   => d   ? new Date(d).toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" }) : ""
 const pct     = (a, b) => b > 0 ? Math.round((a / b) * 100) : 0
 
-// ─── small UI pieces ─────────────────────────────────────────────
+
 const Heading = ({ label }) => (
   <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
     <div style={{ width: 3, height: 20, borderRadius: 2, background: `linear-gradient(to bottom,${G[500]},${G[300]})`, flexShrink: 0 }} />

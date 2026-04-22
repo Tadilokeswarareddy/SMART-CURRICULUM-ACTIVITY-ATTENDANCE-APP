@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom"
 import api from "../api"
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "../constants"
 
-
 const G = {
   50:"#f0fdf4",100:"#dcfce7",200:"#bbf7d0",300:"#86efac",
   500:"#22c55e",600:"#16a34a",700:"#15803d",800:"#166534",900:"#14532d",
@@ -16,36 +15,54 @@ const LoginPage = () => {
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
 
- const SendRequest = async (e) => {
-  e.preventDefault()
-  setLoading(true)
+  const SendRequest = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    setError("")
 
-  // 🔥 ADD THIS CLEANING STEP
-  const cleanedData = {
-    username: username.trim().toLowerCase(),
-    password: password.trim(),
+    const cleanedData = {
+      username: username.trim().toLowerCase(),
+      password: password.trim(),
+    }
+
+    console.log("🚀 Sending login to:", import.meta.env.VITE_API_URL + "/api/token/")
+    console.log("📦 Payload:", { username: cleanedData.username, password: "***" })
+
+    try {
+      const response = await api.post("/api/token/", cleanedData)
+
+      localStorage.setItem(ACCESS_TOKEN, response.data.access)
+      localStorage.setItem(REFRESH_TOKEN, response.data.refresh)
+
+      const role = response.data.role
+      if (role === "student") navigate("/studenthome")
+      else if (role === "teacher") navigate("/teacherhome")
+      else navigate("/admin")
+
+    } catch (err) {
+      // Detailed error logging for debugging
+      if (err.response) {
+        // Server replied with an error (4xx, 5xx)
+        console.error("❌ Server error:", err.response.status, err.response.data)
+        if (err.response.status === 401) {
+          setError("Invalid username or password")
+        } else {
+          setError(`Server error (${err.response.status}). Please try again.`)
+        }
+      } else if (err.request) {
+        // Request was made but no response received — THIS is the mobile bug
+        console.error("🌐 No response from server. Request was:", err.request)
+        console.error("📡 VITE_API_URL is:", import.meta.env.VITE_API_URL)
+        setError("Cannot reach server. Check your internet connection.")
+      } else {
+        // Something else went wrong
+        console.error("💥 Unexpected error:", err.message)
+        setError("Something went wrong. Please try again.")
+      }
+    }
+
+    setLoading(false)
   }
-
-  console.log("Sending:", cleanedData) // for debugging
-
-  try {
-    const response = await api.post("/api/token/", cleanedData)
-
-    localStorage.setItem(ACCESS_TOKEN, response.data.access)
-    localStorage.setItem(REFRESH_TOKEN, response.data.refresh)
-
-    const role = response.data.role
-    if (role === "student") navigate("/studenthome")
-    else if (role === "teacher") navigate("/teacherhome")
-    else navigate("/admin")
-
-  } catch (err) {
-    console.log("ERROR:", err.response?.data) 
-    setError("Invalid username or password")
-  }
-
-  setLoading(false)
-}
 
   return (
     <>
@@ -84,14 +101,37 @@ const LoginPage = () => {
               <form onSubmit={SendRequest} style={{ display:"flex", flexDirection:"column", gap:24 }}>
                 <div>
                   <label style={{ display:"block", fontSize:10, fontWeight:700, color:G[600], textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:6, fontFamily:"'DM Sans',sans-serif" }}>Username</label>
-                  <input type="text" autoCapitalize="none" autoCorrect="off" placeholder="Enter your username" value={username} onChange={(e) => setUsername(e.target.value)} className="lp-input" />
+                  <input
+                    type="text"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    autoComplete="username"
+                    spellCheck="false"
+                    placeholder="Enter your username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="lp-input"
+                  />
                 </div>
                 <div>
                   <label style={{ display:"block", fontSize:10, fontWeight:700, color:G[600], textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:6, fontFamily:"'DM Sans',sans-serif" }}>Password</label>
-                  <input type="password" autoCapitalize="none" autoCorrect="off" placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} className="lp-input" />
+                  <input
+                    type="password"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    autoComplete="current-password"
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="lp-input"
+                  />
                 </div>
 
-                {error && <p style={{ margin:0, fontSize:12, color:"#dc2626", fontFamily:"'DM Sans',sans-serif" }}>{error}</p>}
+                {error && (
+                  <p style={{ margin:0, fontSize:12, color:"#dc2626", fontFamily:"'DM Sans',sans-serif" }}>
+                    ⚠️ {error}
+                  </p>
+                )}
 
                 <div style={{ textAlign:"right" }}>
                   <span style={{ fontSize:12, color:G[600], cursor:"pointer", fontFamily:"'DM Sans',sans-serif" }}>Forgot password?</span>
