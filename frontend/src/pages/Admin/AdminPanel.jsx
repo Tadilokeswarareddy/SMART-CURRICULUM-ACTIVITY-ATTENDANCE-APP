@@ -137,7 +137,7 @@ const AdminPanel = () => {
           ))}
           <div style={{ flex: 1 }} />
           <div style={{ borderTop: `1px solid ${G[100]}`, paddingTop: 12, marginTop: 8 }}>
-            <a href="/logout" style={{ ...s.navBtn, display: "flex", textDecoration: "none", color: "#dc2626" }}>
+            <a href="/" style={{ ...s.navBtn, display: "flex", textDecoration: "none", color: "#dc2626" }}>
               <span style={{ color: "#fca5a5", flexShrink: 0 }}><Icon name="logout" size={15} /></span>
               Logout
             </a>

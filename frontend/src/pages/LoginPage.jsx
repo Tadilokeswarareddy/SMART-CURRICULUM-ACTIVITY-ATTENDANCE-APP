@@ -40,23 +40,19 @@ const LoginPage = () => {
       else navigate("/admin")
 
     } catch (err) {
-      // Detailed error logging for debugging
       if (err.response) {
-        // Server replied with an error (4xx, 5xx)
-        console.error("❌ Server error:", err.response.status, err.response.data)
+        console.error("Server error:", err.response.status, err.response.data)
         if (err.response.status === 401) {
           setError("Invalid username or password")
         } else {
           setError(`Server error (${err.response.status}). Please try again.`)
         }
       } else if (err.request) {
-        // Request was made but no response received — THIS is the mobile bug
-        console.error("🌐 No response from server. Request was:", err.request)
-        console.error("📡 VITE_API_URL is:", import.meta.env.VITE_API_URL)
+        console.error("No response from server. Request was:", err.request)
+        console.error("VITE_API_URL is:", import.meta.env.VITE_API_URL)
         setError("Cannot reach server. Check your internet connection.")
       } else {
-        // Something else went wrong
-        console.error("💥 Unexpected error:", err.message)
+        console.error("Unexpected error:", err.message)
         setError("Something went wrong. Please try again.")
       }
     }
