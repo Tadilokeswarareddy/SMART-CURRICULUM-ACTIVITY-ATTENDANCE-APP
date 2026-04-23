@@ -15,8 +15,7 @@ import TeacherMessagesMain from './pages/TeacherPages/TeacherMessagesMain'
 import TeacherTimetable from './pages/TeacherPages/TeacherTimetable'
 import StudentTimetable from './pages/StudentPages/StudentTimetable'
 import AdminPanel from './pages/Admin/AdminPanel'
-
-
+import ForgotPassword from './pages/ForgotPassword'
 
 const Logout = () => {
   localStorage.clear();
@@ -29,6 +28,7 @@ const App = () => {
     <BrowserRouter>
     <Routes>
       <Route path='/' element={<LoginPage/>}/>
+      <Route path='/forgot-password' element={<ForgotPassword/>}/>
       <Route path="/studenthome" element={<ProtectedRoute allowedRoles={["student"]}><StudentHome /></ProtectedRoute>}/>
       <Route path="/teacherhome" element={<ProtectedRoute allowedRoles={["teacher"]}><TeacherHome /></ProtectedRoute>}/>
       <Route path='*' element={<NotFound404/>}/>
@@ -43,7 +43,6 @@ const App = () => {
       <Route path="/markattendance" element={<ProtectedRoute allowedRoles={["teacher"]}><MarkAttendance /></ProtectedRoute>}/>
       <Route path="/teachertimetable" element={<ProtectedRoute allowedRoles={["teacher"]}><TeacherTimetable /></ProtectedRoute>}/>
       <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><AdminPanel /></ProtectedRoute>} />
-
     </Routes>
     </BrowserRouter>
     </>
