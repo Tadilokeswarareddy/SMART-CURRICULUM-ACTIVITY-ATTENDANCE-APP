@@ -84,10 +84,6 @@ class StudentAttendanceView(APIView):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def generate_task(request):
-    """
-    Return existing incomplete tasks if they exist (preserves state across
-    page navigation), otherwise generate 5 fresh ones from Gemini.
-    """
     existing_tasks = SmartTask.objects.filter(
         student=request.user,
         completed=False,
@@ -102,11 +98,12 @@ def generate_task(request):
                 "duration":    task.duration,
                 "saved_score": task.submission.score
                                if hasattr(task, 'submission') else None,
+                "is_fallback": False,
             }
             for task in existing_tasks
         ])
 
-    data_list     = generate_task_from_llm()
+    data_list, is_fallback = generate_task_from_llm()
     created_tasks = []
     for item in data_list[:5]:
         task = SmartTask.objects.create(
@@ -121,6 +118,7 @@ def generate_task(request):
             "description": task.description,
             "duration":    task.duration,
             "saved_score": None,
+            "is_fallback": is_fallback,
         })
     return Response(created_tasks)
 
@@ -145,41 +143,48 @@ def complete_task(request):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def submit_task_file(request):
-    task_id       = request.data.get("task_id")
-    uploaded_file = request.FILES.get("file")
+    task_id        = request.data.get("task_id")
+    uploaded_files = request.FILES.getlist("files")
 
-    if not task_id or not uploaded_file:
-        return Response({"error": "task_id and file are required"}, status=400)
+    if not task_id or not uploaded_files:
+        return Response({"error": "task_id and at least one file are required"}, status=400)
 
     allowed_types = ["image/png", "image/jpeg", "application/pdf", "text/plain"]
-    mime_type     = uploaded_file.content_type
-    if mime_type not in allowed_types:
-        return Response(
-            {"error": f"File type '{mime_type}' not allowed."}, status=400
-        )
+    files_data = []
+    for uploaded_file in uploaded_files:
+        mime_type = uploaded_file.content_type
+        if mime_type not in allowed_types:
+            return Response(
+                {"error": f"File type '{mime_type}' not allowed."}, status=400
+            )
+        file_bytes = uploaded_file.read()
+        files_data.append((file_bytes, mime_type))
+        uploaded_file.seek(0)
 
     try:
         task = SmartTask.objects.get(id=task_id, student=request.user)
     except SmartTask.DoesNotExist:
         return Response({"error": "Task not found"}, status=404)
 
-
-    file_bytes = uploaded_file.read()
-
-    score, remark = review_submission_with_gemini(
-        file_bytes, mime_type, task.title, task.description
+    score, remark, gemini_failed = review_submission_with_gemini(
+        files_data, task.title, task.description
     )
 
+    if gemini_failed:
+        return Response(
+            {"error": "Gemini is not responding right now. Please try again in a moment.", "gemini_error": True},
+            status=503,
+        )
 
-
-    uploaded_file.seek(0)
+    primary_file = uploaded_files[0]
+    primary_file.seek(0)
 
     submission, created = TaskSubmission.objects.update_or_create(
         task     = task,
         defaults = {
             "student": request.user,
             "score":   score,
-            "file":    uploaded_file,
+            "file":    primary_file,
         },
     )
 
@@ -282,5 +287,4 @@ def teacher_student_stats(request):
             "attendance":      attendance_by_subject,
         })
 
-    # ← this return must be at function level, NOT inside any if/for block
     return Response({"sections": sections, "students": result})

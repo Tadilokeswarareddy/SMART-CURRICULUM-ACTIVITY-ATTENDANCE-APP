@@ -47,7 +47,7 @@ const card = {
   padding: "26px 24px", marginBottom: 22,
 }
 
-// ── QR Fullscreen Modal ──────────────────────────────────────────────────────
+
 const QRModal = ({ value, onClose, qrCounter }) => {
   useEffect(() => {
     const handler = e => { if (e.key === "Escape") onClose() }
@@ -75,7 +75,6 @@ const QRModal = ({ value, onClose, qrCounter }) => {
           position: "relative",
         }}
       >
-        {/* Close button */}
         <button
           onClick={onClose}
           style={{
@@ -93,7 +92,6 @@ const QRModal = ({ value, onClose, qrCounter }) => {
 
         <div style={{ padding: 16, background: G[50], borderRadius: 16, border: `2px solid ${G[200]}`, position: "relative" }}>
           <QRCodeCanvas value={value} size={320} key={value} />
-          {/* Refresh badge */}
           <div style={{
             position: "absolute", top: -12, right: -12,
             background: qrCounter <= 2 ? "#dc2626" : G[700],
@@ -115,7 +113,7 @@ const QRModal = ({ value, onClose, qrCounter }) => {
   )
 }
 
-// ── Live Scan Feed ────────────────────────────────────────────────────────────
+
 const LiveFeed = ({ presentIds, students }) => {
   const [open, setOpen] = useState(false)
   const presentStudents = students.filter(s => presentIds.includes(s.id))
@@ -125,7 +123,7 @@ const LiveFeed = ({ presentIds, students }) => {
 
   return (
     <div style={{ marginBottom: 16 }}>
-      {/* Toggle button */}
+
       <button
         onClick={() => setOpen(o => !o)}
         style={{
@@ -151,7 +149,7 @@ const LiveFeed = ({ presentIds, students }) => {
         </span>
       </button>
 
-      {/* Expanded panel */}
+  
       {open && (
         <div style={{
           border: `1.5px solid ${G[300]}`, borderTop: "none",
@@ -160,10 +158,10 @@ const LiveFeed = ({ presentIds, students }) => {
           animation: "fadeUp 0.18s ease",
         }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            {/* Present column */}
+  
             <div>
               <p style={{ margin: "0 0 8px", fontSize: 10, fontWeight: 700, color: G[600], letterSpacing: "1.2px", textTransform: "uppercase" }}>
-                ✅ Present ({presentStudents.length})
+                 Present ({presentStudents.length})
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
                 {presentStudents.map(s => (
@@ -185,7 +183,7 @@ const LiveFeed = ({ presentIds, students }) => {
             {/* Absent column */}
             <div>
               <p style={{ margin: "0 0 8px", fontSize: 10, fontWeight: 700, color: "#dc2626", letterSpacing: "1.2px", textTransform: "uppercase" }}>
-                ❌ Not yet scanned ({absentStudents.length})
+                 Not yet scanned ({absentStudents.length})
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
                 {absentStudents.map(s => (
@@ -216,7 +214,7 @@ const LiveFeed = ({ presentIds, students }) => {
 
 export default function MarkAttendance() {
   const [assignments,   setAssignments]   = useState([])
-  const [loadingAssign, setLoadingAssign] = useState(true)   // ← loading state
+  const [loadingAssign, setLoadingAssign] = useState(true)  
   const [assignmentId,  setAssignmentId]  = useState("")
   const [sessionId,     setSessionId]     = useState(null)
   const [qrValue,       setQrValue]       = useState("")
@@ -225,7 +223,7 @@ export default function MarkAttendance() {
   const [qrCounter,     setQrCounter]     = useState(QR_INTERVAL)
   const [sessionErr,    setSessionErr]    = useState("")
   const [students,      setStudents]      = useState([])
-  const [loadingStudents, setLoadingStudents] = useState(false)  // ← loading state
+  const [loadingStudents, setLoadingStudents] = useState(false)  
   const [presentIds,    setPresentIds]    = useState([])
   const [submitting,    setSubmitting]    = useState(false)
   const [submitMsg,     setSubmitMsg]     = useState("")
@@ -235,14 +233,14 @@ export default function MarkAttendance() {
   const [sessionDetail, setSessionDetail] = useState(null)
   const [loadingHist,   setLoadingHist]   = useState(false)
   const [loadingDetail, setLoadingDetail] = useState(false)
-  const [qrModalOpen,   setQrModalOpen]   = useState(false)   // ← QR modal
+  const [qrModalOpen,   setQrModalOpen]   = useState(false)   
 
   const pollRef     = useRef(null)
   const sessionRef  = useRef(null)
   const qrRotRef    = useRef(null)
   const qrBadgeRef  = useRef(null)
 
-  // ── Fetch assignments + all sections in parallel on mount ──────────────────
+
   useEffect(() => {
     setLoadingAssign(true)
     api.get("/api/assignments/")
@@ -251,7 +249,7 @@ export default function MarkAttendance() {
       .finally(() => setLoadingAssign(false))
   }, [])
 
-  // ── Fetch students when assignment changes ─────────────────────────────────
+
   useEffect(() => {
     if (!assignmentId) { setStudents([]); return }
     const a = assignments.find(x => x.id === parseInt(assignmentId))
@@ -472,7 +470,6 @@ export default function MarkAttendance() {
             )}
           </div>
 
-          {/* Tabs */}
           {assignmentId && (
             <div style={{ display: "flex", gap: 0, borderBottom: `2px solid ${G[100]}`, marginBottom: 22, animation: "fadeUp 0.45s ease both", animationDelay: "0.05s" }}>
               {[["attend", "Take Attendance"], ["history", "History"]].map(([key, label]) => (
@@ -488,8 +485,6 @@ export default function MarkAttendance() {
               ))}
             </div>
           )}
-
-          {/* ── Take Attendance Tab ─────────────────────────────────────────── */}
           {assignmentId && tab === "attend" && (
             <>
               <ErrBox msg={sessionErr} />
@@ -498,10 +493,8 @@ export default function MarkAttendance() {
 
               {!isActive && !sessionId && !submitMsg && (
                 <div style={{ ...card, textAlign: "center", padding: "40px 24px", animation: "fadeUp 0.4s ease both" }}>
-                  <div style={{ fontSize: 36, marginBottom: 16 }}>📋</div>
                   <p style={{ color: "#6b7280", fontSize: 14, marginBottom: 24, maxWidth: 360, margin: "0 auto 24px", lineHeight: 1.6 }}>
-                    Start a session for <strong style={{ color: G[700] }}>{selectedAssignment?.section.branch.name} {selectedAssignment?.section.name}</strong>.
-                    A QR code will appear — students scan to flip Present. Click the QR to expand it for a projector.
+                    Start a session for <strong style={{ color: G[700] }}>{selectedAssignment?.section.branch.name} {selectedAssignment?.section.name}</strong>
                   </p>
                   <button onClick={startSession}
                     style={{ background: G[700], color: "#fff", border: "none", borderRadius: 10, padding: "12px 28px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>
@@ -763,7 +756,7 @@ export default function MarkAttendance() {
         </div>
       </div>
 
-      {/* Spinner keyframe — injected inline since we can't use a CSS file */}
+
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </>
   )

@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 
-
 const G = {
   50:"#f0fdf4",100:"#dcfce7",200:"#bbf7d0",300:"#86efac",
   400:"#4ade80",500:"#22c55e",600:"#16a34a",700:"#15803d",
@@ -8,15 +7,16 @@ const G = {
 };
 
 const SmartTask = ({ onStatsRefresh }) => {
-  const [tasks, setTasks]           = useState([]);
-  const [loading, setLoading]       = useState(false);
-  const [error, setError]           = useState("");
+  const [tasks, setTasks]             = useState([]);
+  const [loading, setLoading]         = useState(false);
+  const [error, setError]             = useState("");
+  const [geminiWarning, setGeminiWarning] = useState(false);
   const [submissions, setSubmissions] = useState({});
 
   const token = () => localStorage.getItem("access");
 
   const getTasks = async () => {
-    setLoading(true); setError("");
+    setLoading(true); setError(""); setGeminiWarning(false);
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"}/api/task/generate/`, {
         method: "POST",
@@ -24,8 +24,8 @@ const SmartTask = ({ onStatsRefresh }) => {
       });
       const data = await res.json();
       if (res.ok && Array.isArray(data)) {
+        if (data[0]?.is_fallback) setGeminiWarning(true);
         setTasks(data);
-        // Restore any previously saved scores into submissions state
         const restored = {};
         data.forEach(task => {
           if (task.saved_score != null) {
@@ -42,18 +42,20 @@ const SmartTask = ({ onStatsRefresh }) => {
     setLoading(false);
   };
 
-  const handleFileChange = (taskId, file) =>
-    setSubmissions(p => ({ ...p, [taskId]: { ...p[taskId], file, error: null } }));
+  const handleFilesChange = (taskId, files) => {
+    const fileArray = Array.from(files);
+    setSubmissions(p => ({ ...p, [taskId]: { ...p[taskId], files: fileArray, error: null } }));
+  };
 
   const handleSubmitAssignment = async (taskId) => {
     const sub = submissions[taskId];
-    if (!sub?.file) { alert("Please upload a file before submitting."); return; }
+    if (!sub?.files?.length) { alert("Please upload at least one file before submitting."); return; }
 
     setSubmissions(p => ({ ...p, [taskId]: { ...p[taskId], reviewing: true, error: null } }));
 
     const formData = new FormData();
     formData.append("task_id", taskId);
-    formData.append("file", sub.file);
+    sub.files.forEach(f => formData.append("files", f));
 
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"}/api/task/submit/`, {
@@ -66,10 +68,26 @@ const SmartTask = ({ onStatsRefresh }) => {
         setSubmissions(p => ({ ...p, [taskId]: { ...p[taskId], reviewing: false, submitted: true, score: data.score, remark: data.remark } }));
         if (onStatsRefresh) onStatsRefresh();
       } else {
-        setSubmissions(p => ({ ...p, [taskId]: { ...p[taskId], reviewing: false, error: data.error || "Submission failed." } }));
+        setSubmissions(p => ({
+          ...p,
+          [taskId]: {
+            ...p[taskId],
+            reviewing: false,
+            error: data.gemini_error
+              ? "Gemini is not responding right now. Please try submitting again in a moment."
+              : (data.error || "Submission failed."),
+          },
+        }));
       }
     } catch {
-      setSubmissions(p => ({ ...p, [taskId]: { ...p[taskId], reviewing: false, error: "Network error." } }));
+      setSubmissions(p => ({
+        ...p,
+        [taskId]: {
+          ...p[taskId],
+          reviewing: false,
+          error: "Network error. Please check your connection and try again.",
+        },
+      }));
     }
   };
 
@@ -108,7 +126,6 @@ const SmartTask = ({ onStatsRefresh }) => {
       `}</style>
 
       <div style={{ minHeight:"100vh", background:G[50], fontFamily:"'DM Sans',sans-serif" }}>
-        {/* Banner */}
         <div style={{ position:"relative", background:`linear-gradient(135deg,${G[900]} 0%,${G[700]} 50%,${G[500]} 100%)`, paddingTop:76, paddingBottom:68, overflow:"hidden" }}>
           <div style={{ position:"absolute",top:-70,right:-70,width:300,height:300,borderRadius:"50%",background:"rgba(255,255,255,0.05)" }}/>
           <div style={{ maxWidth:820, margin:"0 auto", padding:"0 28px", position:"relative", zIndex:1, animation:"fadeUp 0.45s ease both" }}>
@@ -122,6 +139,17 @@ const SmartTask = ({ onStatsRefresh }) => {
         </div>
 
         <div style={{ maxWidth:820, margin:"0 auto", padding:"32px 24px 56px" }}>
+
+          {geminiWarning && (
+            <div style={{ background:"#fffbeb",border:"1.5px solid #fde68a",borderRadius:12,padding:"14px 18px",marginBottom:24,display:"flex",alignItems:"flex-start",gap:12,animation:"fadeUp 0.4s ease both" }}>
+              <span style={{ fontSize:18,flexShrink:0,marginTop:1 }}>⚠️</span>
+              <div>
+                <p style={{ margin:"0 0 2px",fontSize:14,fontWeight:700,color:"#92400e" }}>Gemini is not responding</p>
+                <p style={{ margin:0,fontSize:13,color:"#b45309",lineHeight:1.5 }}>These are default tasks. Your work will still be graded normally once Gemini comes back online.</p>
+              </div>
+            </div>
+          )}
+
           {loading && (
             <div style={{ display:"flex",flexDirection:"column",alignItems:"center",padding:"40px 0" }}>
               <div style={{ width:44,height:44,borderRadius:"50%",border:`4px solid ${G[200]}`,position:"relative" }}>
@@ -137,31 +165,10 @@ const SmartTask = ({ onStatsRefresh }) => {
 
           {tasks.length === 0 && !loading && (
             <div style={{ background:"#fff",borderRadius:18,boxShadow:`0 2px 16px rgba(0,0,0,0.07),0 0 0 1px ${G[100]}`,padding:"56px 28px",textAlign:"center",animation:"fadeUp 0.5s ease both" }}>
-<div
-  style={{
-    width: 64,
-    height: 64,
-    borderRadius: "50%",
-    background: G[100],
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    margin: "0 auto 20px",
-    border: `2px solid ${G[200]}`,
-    overflow: "hidden"
-  }}
->
-  <img
-    src="/pad.svg"
-    alt="Task Icon"
-    style={{
-      width: 28,
-      height: 28,
-      objectFit: "contain"
-    }}
-  />
-</div>
-            <h2 style={{ margin:"0 0 8px",fontSize:22,fontWeight:700,color:G[800],fontFamily:"'DM Serif Display',serif" }}>Generate your tasks</h2>
+              <div style={{ width:64,height:64,borderRadius:"50%",background:G[100],display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 20px",border:`2px solid ${G[200]}`,overflow:"hidden" }}>
+                <img src="/pad.svg" alt="Task Icon" style={{ width:28,height:28,objectFit:"contain" }}/>
+              </div>
+              <h2 style={{ margin:"0 0 8px",fontSize:22,fontWeight:700,color:G[800],fontFamily:"'DM Serif Display',serif" }}>Generate your tasks</h2>
               <p style={{ margin:"0 0 28px",fontSize:14,color:"#6b7280",lineHeight:1.6 }}>Tasks that help you better understand what you learn in uni</p>
               <button onClick={getTasks} style={{ background:G[700],color:"#fff",border:"none",borderRadius:10,padding:"12px 28px",fontSize:14,fontWeight:600,cursor:"pointer" }}>
                 Generate 5 New Tasks
@@ -174,7 +181,6 @@ const SmartTask = ({ onStatsRefresh }) => {
               const sub = submissions[task.id] || {};
               return (
                 <div key={task.id} className="st-hover" style={{ background:"#fff",borderRadius:18,boxShadow:`0 2px 16px rgba(0,0,0,0.07),0 0 0 1px ${G[100]}`,padding:"28px",animation:`fadeUp 0.4s ease both`,animationDelay:`${index*0.07}s`,transition:"box-shadow 0.2s,transform 0.2s" }}>
-                  {/* Header row */}
                   <div style={{ display:"flex",alignItems:"center",gap:12,marginBottom:16 }}>
                     <div style={{ width:32,height:32,borderRadius:9,background:G[100],display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
                       <span style={{ fontSize:13,fontWeight:700,color:G[700] }}>{index+1}</span>
@@ -184,9 +190,8 @@ const SmartTask = ({ onStatsRefresh }) => {
                         <div style={{ width:3,height:18,borderRadius:2,background:`linear-gradient(to bottom,${G[500]},${G[300]})`,flexShrink:0 }}/>
                         <h3 style={{ margin:0,fontSize:16,fontWeight:700,color:G[800] }}>{task.title}</h3>
                       </div>
-                      <span style={{ fontSize:12,color:G[600],fontWeight:500 }}>⏱ {task.duration||20} minutes</span>
+                      <span style={{ fontSize:12,color:G[600],fontWeight:500 }}> {task.duration||20} minutes</span>
                     </div>
-                    {/* Score badge — persists after page change */}
                     {sub.score != null && (
                       <div style={{ background:scoreBg(sub.score),border:`1.5px solid ${scoreBorder(sub.score)}`,borderRadius:10,padding:"6px 14px",textAlign:"center",flexShrink:0 }}>
                         <div style={{ fontSize:18,fontWeight:700,color:scoreColor(sub.score),lineHeight:1 }}>{sub.score}</div>
@@ -197,19 +202,31 @@ const SmartTask = ({ onStatsRefresh }) => {
 
                   <p style={{ margin:"0 0 20px",fontSize:14,color:"#374151",lineHeight:1.7 }}>{task.description}</p>
 
-                  {/* File upload */}
                   <div style={{ background:G[50],border:`1.5px solid ${G[200]}`,borderRadius:12,padding:16,marginBottom:14 }}>
                     <label style={{ display:"block",fontSize:10,fontWeight:700,color:G[600],textTransform:"uppercase",letterSpacing:"1.2px",marginBottom:8 }}>
-                      Upload Assignment File
-                      <span style={{ marginLeft:6,fontWeight:400,color:"#9ca3af",textTransform:"none",letterSpacing:0 }}>(PNG, JPG, PDF, TXT)</span>
+                      Upload Assignment Files
+                      <span style={{ marginLeft:6,fontWeight:400,color:"#9ca3af",textTransform:"none",letterSpacing:0 }}>(PNG, JPG, PDF, TXT — multiple pages supported)</span>
                     </label>
-                    <input type="file" accept=".png,.jpg,.jpeg,.pdf,.txt" className="st-file st-field"
-                      onChange={e => handleFileChange(task.id, e.target.files[0])}
-                      style={{ width:"100%",fontSize:13,border:`1.5px solid ${G[200]}`,borderRadius:10,padding:"10px 14px",background:"#fff",boxSizing:"border-box",transition:"border-color 0.2s,box-shadow 0.2s" }}/>
-                    {sub.file && <p style={{ marginTop:8,fontSize:12,color:G[600] }}>✓ {sub.file.name}</p>}
+                    <input
+                      type="file"
+                      accept=".png,.jpg,.jpeg,.pdf,.txt"
+                      multiple
+                      className="st-file st-field"
+                      onChange={e => handleFilesChange(task.id, e.target.files)}
+                      style={{ width:"100%",fontSize:13,border:`1.5px solid ${G[200]}`,borderRadius:10,padding:"10px 14px",background:"#fff",boxSizing:"border-box",transition:"border-color 0.2s,box-shadow 0.2s" }}
+                    />
+                    {sub.files?.length > 0 && (
+                      <div style={{ marginTop:10,display:"flex",flexDirection:"column",gap:4 }}>
+                        {sub.files.map((f, i) => (
+                          <p key={i} style={{ margin:0,fontSize:12,color:G[600] }}>✓ {f.name}</p>
+                        ))}
+                        {sub.files.length > 1 && (
+                          <p style={{ margin:"4px 0 0",fontSize:11,color:G[500],fontWeight:600 }}>{sub.files.length} files selected</p>
+                        )}
+                      </div>
+                    )}
                   </div>
 
-                  {/* Reviewing spinner */}
                   {sub.reviewing && (
                     <div style={{ background:"#fffbeb",border:"1.5px solid #fde68a",borderRadius:10,padding:"12px 16px",marginBottom:14,display:"flex",alignItems:"center",gap:10,fontSize:13,color:"#92400e",fontWeight:500 }}>
                       <div style={{ width:16,height:16,borderRadius:"50%",border:"2px solid #fcd34d",borderTop:"2px solid #d97706",animation:"spin 0.75s linear infinite",flexShrink:0 }}/>
@@ -217,7 +234,6 @@ const SmartTask = ({ onStatsRefresh }) => {
                     </div>
                   )}
 
-                  {/* Score result banner */}
                   {sub.submitted && sub.score != null && (
                     <div style={{ background:scoreBg(sub.score),border:`1.5px solid ${scoreBorder(sub.score)}`,borderRadius:10,padding:"12px 16px",marginBottom:14,fontSize:13,fontWeight:600,color:scoreColor(sub.score) }}>
                       {scoreEmoji(sub.score)} Scored: <strong>{sub.score}/10</strong>
@@ -226,7 +242,13 @@ const SmartTask = ({ onStatsRefresh }) => {
                   )}
 
                   {sub.error && (
-                    <div style={{ background:"#fef2f2",border:"1.5px solid #fecaca",color:"#dc2626",borderRadius:10,padding:"10px 16px",fontSize:13,marginBottom:14 }}>{sub.error}</div>
+                    <div style={{ background:"#fef2f2",border:"1.5px solid #fecaca",borderRadius:10,padding:"12px 16px",marginBottom:14,display:"flex",alignItems:"flex-start",gap:10 }}>
+                      <span style={{ fontSize:16,flexShrink:0,marginTop:1 }}>⚠️</span>
+                      <div>
+                        <p style={{ margin:"0 0 2px",fontSize:13,fontWeight:700,color:"#dc2626" }}>Submission Failed</p>
+                        <p style={{ margin:0,fontSize:13,color:"#dc2626" }}>{sub.error}</p>
+                      </div>
+                    </div>
                   )}
 
                   <div style={{ display:"flex",gap:12,flexWrap:"wrap" }}>
@@ -243,15 +265,6 @@ const SmartTask = ({ onStatsRefresh }) => {
               );
             })}
           </div>
-
-          {tasks.length > 0 && (
-            <div style={{ textAlign:"center",marginTop:32 }}>
-              <button onClick={() => { setTasks([]); setSubmissions({}); }}
-                style={{ background:"none",border:"none",color:"#6b7280",fontSize:13,cursor:"pointer",textDecoration:"underline" }}>
-                Clear all tasks
-              </button>
-            </div>
-          )}
         </div>
       </div>
     </>

@@ -66,7 +66,6 @@ const TeacherProfile = () => {
 
       <div style={s.page}>
 
-        {/* ── Banner ── */}
         <div style={s.banner}>
           <div style={s.c1} /><div style={s.c2} /><div style={s.c3} />
 
@@ -91,10 +90,8 @@ const TeacherProfile = () => {
           </svg>
         </div>
 
-        {/* ── Body ── */}
         <div style={s.body}>
 
-          {/* Details card */}
           <div style={{ ...s.card, animation: "fadeUp 0.5s ease both", animationDelay: "0.2s" }}>
             <Heading label="Teacher Details" />
             <div style={s.grid}>
@@ -108,7 +105,6 @@ const TeacherProfile = () => {
               <Field label="Experience"   value={profile.experience_years ? `${profile.experience_years} years` : null} />
             </div>
 
-            {/* Bio */}
             {profile.bio && (
               <div style={{ marginTop: 24 }}>
                 <label style={s.bioLabel}>Bio</label>
@@ -117,7 +113,6 @@ const TeacherProfile = () => {
             )}
           </div>
 
-          {/* Subjects card */}
           {profile.subjects_taught?.length > 0 && (
             <div style={{ ...s.card, marginTop: 20, animation: "fadeUp 0.5s ease both", animationDelay: "0.32s" }}>
               <Heading label="Subjects Teaching" />

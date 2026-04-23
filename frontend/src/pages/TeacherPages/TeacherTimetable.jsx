@@ -66,7 +66,6 @@ const TeacherTimetable = () => {
 
         <div style={{ maxWidth:900, margin:"0 auto", padding:"32px 24px 56px" }}>
 
-          {/* Day selector */}
           <div style={{ display:"flex", gap:8, marginBottom:24, overflowX:"auto", paddingBottom:4, animation:"fadeUp 0.5s ease both" }}>
             {days.map(day => {
               const active = selectedDay === day
@@ -86,7 +85,6 @@ const TeacherTimetable = () => {
             })}
           </div>
 
-          {/* Schedule card */}
           <div style={{ background:"#fff", borderRadius:18, boxShadow:`0 2px 16px rgba(0,0,0,0.07),0 0 0 1px ${G[100]}`, padding:"28px", animation:"fadeUp 0.45s ease both", animationDelay:"0.08s" }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:24 }}>
               <div style={{ width:3, height:20, borderRadius:2, background:`linear-gradient(to bottom,${G[500]},${G[300]})`, flexShrink:0 }}/>

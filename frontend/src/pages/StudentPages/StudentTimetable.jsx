@@ -90,7 +90,6 @@ const StudentTimetable = () => {
 
             {!timetable[selectedDay] || timetable[selectedDay].length === 0 ? (
               <div style={{ textAlign:"center", padding:"32px 0" }}>
-                <span style={{ fontSize:32 }}>📅</span>
                 <p style={{ color:"#9ca3af", fontSize:13, fontFamily:"'DM Sans',sans-serif", marginTop:8 }}>No classes scheduled for this day.</p>
               </div>
             ) : (

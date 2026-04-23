@@ -1,12 +1,9 @@
 import json, re, base64, random, requests
 from django.conf import settings
 
-# --- APRIL 2026 STABLE CONFIG ---
-MODEL_ID = "gemini-2.5-flash"
-
-# Always use v1beta — supports responseMimeType + newer features
-API_URL      = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL_ID}:generateContent?key={settings.GEMINI_API_KEY}"
-REVIEW_URL   = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL_ID}:generateContent?key={settings.GEMINI_API_KEY}"
+MODEL_ID   = "gemini-2.5-flash"
+API_URL    = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL_ID}:generateContent?key={settings.GEMINI_API_KEY}"
+REVIEW_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL_ID}:generateContent?key={settings.GEMINI_API_KEY}"
 
 FALLBACK_TASK_POOLS = [
     [
@@ -33,17 +30,17 @@ def generate_task_from_llm():
 
         if response.status_code != 200:
             print(f"AI ERROR: {response.status_code} — {response.text[:200]}")
-            return random.choice(FALLBACK_TASK_POOLS)
+            return random.choice(FALLBACK_TASK_POOLS), True
 
         res_data = response.json()
         if 'candidates' not in res_data:
             print("AI ERROR: no candidates in response")
-            return random.choice(FALLBACK_TASK_POOLS)
+            return random.choice(FALLBACK_TASK_POOLS), True
 
         raw_text = res_data['candidates'][0]['content']['parts'][0]['text']
-        clean = re.sub(r'```json|```', '', raw_text).strip()
-        match = re.search(r'\[.*\]', clean, re.DOTALL)
-        tasks = json.loads(match.group(0)) if match else json.loads(clean)
+        clean    = re.sub(r'```json|```', '', raw_text).strip()
+        match    = re.search(r'\[.*\]', clean, re.DOTALL)
+        tasks    = json.loads(match.group(0)) if match else json.loads(clean)
 
         final_tasks = []
         for t in tasks[:5]:
@@ -57,21 +54,23 @@ def generate_task_from_llm():
             })
 
         print(f"AI SUCCESS: {len(final_tasks)} tasks ready.")
-        return final_tasks
+        return final_tasks, False
 
     except Exception as e:
         print(f"AI SCRUBBER ERROR: {str(e)}")
-        return random.choice(FALLBACK_TASK_POOLS)
+        return random.choice(FALLBACK_TASK_POOLS), True
 
 
 def review_submission_with_gemini(
-    file_bytes: bytes,
-    mime_type: str,
+    files: list,
     task_title: str,
     task_description: str,
 ) -> tuple:
     try:
-        encoded_file = base64.b64encode(file_bytes).decode("utf-8")
+        parts = []
+        for file_bytes, mime_type in files:
+            encoded = base64.b64encode(file_bytes).decode("utf-8")
+            parts.append({"inlineData": {"mimeType": mime_type, "data": encoded}})
 
         prompt = f"""
 You are a strict technical grader for a university CS course.
@@ -79,10 +78,12 @@ You are a strict technical grader for a university CS course.
 TASK TITLE: {task_title}
 TASK DESCRIPTION: {task_description}
 
+The student may have submitted multiple images/files representing different pages of their work. Review ALL pages together as a single submission.
+
 GRADING INSTRUCTIONS — follow every step in order:
 
 STEP 1 — IDENTIFY CONTENT
-Look at the uploaded image/file carefully.
+Look at all uploaded images/files carefully.
 Is this a programming environment? (VS Code, terminal, code editor, syntax highlighting, line numbers)
 
 STEP 2 — DETECT CHEATING
@@ -103,17 +104,13 @@ Return ONLY a raw JSON object. No markdown, no backticks, no explanation outside
   "content_summary": "one sentence describing exactly what you see",
   "score": 0.0,
   "reason": "one sentence explaining the score",
-  "remark": "2-3 words of feedback shown to the student, e.g. 'Good linked list', 'Wrong task uploaded', 'Incomplete solution', 'Excellent work'"
+  "remark": "2-3 words of feedback shown to the student"
 }}
 """
+        parts.append({"text": prompt})
 
         payload = {
-            "contents": [{
-                "parts": [
-                    {"inlineData": {"mimeType": mime_type, "data": encoded_file}},
-                    {"text": prompt},
-                ]
-            }],
+            "contents": [{"parts": parts}],
             "generationConfig": {
                 "temperature": 0.0,
                 "responseMimeType": "application/json",
@@ -124,22 +121,20 @@ Return ONLY a raw JSON object. No markdown, no backticks, no explanation outside
 
         if response.status_code != 200:
             print(f"REVIEW API ERROR: {response.status_code} — {response.text[:200]}")
-            return _fallback_score(file_bytes, mime_type)
+            return None, None, True
 
         res_data = response.json()
 
         if 'candidates' not in res_data or not res_data['candidates']:
             print("REVIEW ERROR: no candidates")
-            return _fallback_score(file_bytes, mime_type)
+            return None, None, True
 
         text_out = res_data['candidates'][0]['content']['parts'][0]['text']
+        clean    = re.sub(r'```json|```', '', text_out).strip()
+        result   = json.loads(clean)
 
-        # Strip any accidental markdown fences
-        clean = re.sub(r'```json|```', '', text_out).strip()
-        result = json.loads(clean)
-
-        score = float(result.get("score", 0))
-        score = max(0.0, min(10.0, score))  # Clamp to [0, 10]
+        score  = float(result.get("score", 0))
+        score  = max(0.0, min(10.0, score))
         remark = result.get("remark", "")
 
         print(f"\n--- AI GRADER DEBUG ---")
@@ -149,21 +144,11 @@ Return ONLY a raw JSON object. No markdown, no backticks, no explanation outside
         print(f"Score   : {score}")
         print(f"-----------------------\n")
 
-        return score, remark  
+        return score, remark, False
 
     except json.JSONDecodeError as e:
         print(f"JSON PARSE ERROR in grader: {e}")
-        return _fallback_score(file_bytes, mime_type)
+        return None, None, True
     except Exception as e:
         print(f"REVIEW ERROR: {str(e)}")
-        return _fallback_score(file_bytes, mime_type)
-
-
-def _fallback_score(file_bytes: bytes, mime_type: str) -> tuple:
-    """Heuristic scoring when AI is unavailable."""
-    size = len(file_bytes)
-    if mime_type == "text/plain":
-        return (7.0, "Looks reasonable") if size > 150 else (4.5, "Too short")
-    if size < 10_000:  return (4.0, "File too small")
-    if size < 100_000: return (6.5, "Partial submission")
-    return (8.0, "Good file size")
+        return None, None, True

@@ -19,7 +19,6 @@ const AttendanceIndividual = ({ subject, presentClasses, totalClasses, teacherNa
     <>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap');`}</style>
       <div style={{ display:"flex", alignItems:"flex-start", gap:16, paddingTop:4, paddingBottom:4 }}>
-        {/* Ring */}
         <div style={{ display:"flex", flexDirection:"column", alignItems:"center", flexShrink:0 }}>
           <div style={{ position:"relative", width:68, height:68 }}>
             <svg width="68" height="68" viewBox="0 0 36 36" style={{ transform:"rotate(-90deg)" }}>

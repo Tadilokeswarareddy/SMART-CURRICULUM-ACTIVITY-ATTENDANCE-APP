@@ -71,7 +71,6 @@ const TeacherHome = () => {
       <div style={{ minHeight:"100vh", background:G[50], fontFamily:"'DM Sans',sans-serif" }}>
         <TeacherNav />
 
-        {/* ── Banner ── */}
         <div style={{
           position:"relative",
           background:`linear-gradient(135deg,${G[900]} 0%,${G[700]} 50%,${G[500]} 100%)`,
@@ -94,10 +93,8 @@ const TeacherHome = () => {
           </svg>
         </div>
 
-        {/* ── Body ── */}
         <div style={{ maxWidth:1100, margin:"0 auto", padding:"32px 24px 56px" }}>
 
-          {/* Quick actions */}
           <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))", gap:16, marginBottom:28, animation:"fadeUp 0.5s ease both", animationDelay:"0.1s" }}>
             {[
               { to:"/markattendance",   label:"Mark Attendance", sub:"QR or manual",      accent:"#3b82f6" },
@@ -118,7 +115,6 @@ const TeacherHome = () => {
             ))}
           </div>
 
-          {/* Your Classes */}
           <div style={{ background:"#fff", borderRadius:18, boxShadow:`0 2px 16px rgba(0,0,0,0.07),0 0 0 1px ${G[100]}`, padding:"28px", marginBottom:24, animation:"fadeUp 0.5s ease both", animationDelay:"0.18s" }}>
             <Heading label="Your Classes" />
             {loading ? (
@@ -144,7 +140,6 @@ const TeacherHome = () => {
             )}
           </div>
 
-          {/* Student Performance */}
           <div style={{ background:"#fff", borderRadius:18, boxShadow:`0 2px 16px rgba(0,0,0,0.07),0 0 0 1px ${G[100]}`, padding:"28px", animation:"fadeUp 0.5s ease both", animationDelay:"0.26s" }}>
             <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:20 }}>
               <div style={{ display:"flex", alignItems:"center", gap:10 }}>
@@ -161,7 +156,6 @@ const TeacherHome = () => {
               )}
             </div>
 
-            {/* Section tabs */}
             {sections.length > 0 && (
               <div style={{ display:"flex", flexWrap:"wrap", gap:8, marginBottom:20 }}>
                 {[{ id:null, branch:"All", name:"Sections" }, ...sections.map(s => ({ id:s.id, branch:s.branch, name:s.name }))].map(sec => {
@@ -184,7 +178,6 @@ const TeacherHome = () => {
               </div>
             )}
 
-            {/* Table */}
             {statsLoading ? (
               <div style={{ display:"flex", alignItems:"center", gap:12, padding:"32px 0", justifyContent:"center" }}>
                 <div style={{ width:20, height:20, borderRadius:"50%", border:`3px solid ${G[200]}`, borderTop:`3px solid ${G[500]}`, animation:"spin 0.75s linear infinite" }}/>

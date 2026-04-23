@@ -24,7 +24,6 @@ const AttendanceIndividualMain = () => {
     <>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap');`}</style>
       <div style={{ background:"#fff", borderRadius:18, boxShadow:`0 2px 16px rgba(0,0,0,0.07),0 0 0 1px ${G[100]}`, padding:"24px 22px", width:"100%", maxWidth:520, fontFamily:"'DM Sans',sans-serif" }}>
-        {/* Header */}
         <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:18 }}>
           <div style={{ width:3, height:20, borderRadius:2, background:`linear-gradient(to bottom,${G[500]},${G[300]})`, flexShrink:0 }} />
           <h2 style={{ margin:0, fontSize:16, fontWeight:700, color:G[800], fontFamily:"'DM Sans',sans-serif" }}>Attendance</h2>
@@ -50,7 +49,6 @@ const AttendanceIndividualMain = () => {
           )}
         </div>
 
-        {/* Footer */}
         <div style={{ display:"flex", alignItems:"center", marginTop:16, paddingTop:14, borderTop:`1px solid ${G[100]}` }}>
           <p style={{ margin:0, fontSize:14, fontWeight:500, color:G[900], fontFamily:"'DM Sans',sans-serif" }}>
             Total: <span style={{ color:G[600], fontWeight:700 }}>{overall}%</span>

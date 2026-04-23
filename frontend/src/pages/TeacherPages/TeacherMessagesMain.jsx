@@ -66,7 +66,6 @@ const TeacherMessagesMain = () => {
       <div style={{ minHeight:"100vh", background:G[50], fontFamily:"'DM Sans',sans-serif" }}>
         <TeacherNav />
 
-        {/* Banner */}
         <div style={{
           position:"relative",
           background:`linear-gradient(135deg,${G[900]} 0%,${G[700]} 50%,${G[500]} 100%)`,
@@ -88,7 +87,6 @@ const TeacherMessagesMain = () => {
 
         <div style={{ maxWidth:700, margin:"0 auto", padding:"32px 24px 56px" }}>
 
-          {/* Header row */}
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20, animation:"fadeUp 0.5s ease both" }}>
             <div style={{ display:"flex", alignItems:"center", gap:10 }}>
               <div style={{ width:3, height:22, borderRadius:2, background:`linear-gradient(to bottom,${G[500]},${G[300]})`, flexShrink:0 }}/>
@@ -113,7 +111,6 @@ const TeacherMessagesMain = () => {
             </div>
           )}
 
-          {/* Send form */}
           {showForm && (
             <div style={{ background:"#fff", borderRadius:18, boxShadow:`0 2px 16px rgba(0,0,0,0.07),0 0 0 1px ${G[100]}`, padding:"28px", marginBottom:20, animation:"fadeUp 0.38s ease both" }}>
               <Heading label="Send Message to Section" />
@@ -151,7 +148,7 @@ const TeacherMessagesMain = () => {
             </div>
           )}
 
-          {/* Inbox */}
+          
           <div style={{ background:"#fff", borderRadius:18, boxShadow:`0 2px 16px rgba(0,0,0,0.07),0 0 0 1px ${G[100]}`, padding:"28px", animation:"fadeUp 0.44s ease both", animationDelay:"0.08s" }}>
             <Heading label="Inbox" />
             <div style={{ display:"flex", flexDirection:"column", gap:0, maxHeight:520, overflowY:"auto" }}>
