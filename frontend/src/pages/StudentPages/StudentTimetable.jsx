@@ -38,11 +38,14 @@ const StudentTimetable = () => {
   if (loading) return (
     <>
       <StudentNav />
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"center", minHeight:"calc(100vh - 64px)", background:G[50] }}>
-        <p style={{ color:G[600], fontFamily:"'DM Sans',sans-serif", fontSize:14 }}>Loading timetable…</p>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", minHeight:"calc(100vh - 64px)", background:G[50], gap:14 }}>
+        <div style={{ width:40, height:40, borderRadius:"50%", border:`4px solid ${G[200]}`, borderTop:`4px solid ${G[500]}`, animation:"spin 0.75s linear infinite" }} />
+        <p style={{ color:G[600], fontFamily:"'DM Sans',sans-serif", fontSize:13, margin:0 }}>Loading timetable…</p>
       </div>
     </>
   )
+
   if (error) return (
     <>
       <StudentNav />
@@ -58,13 +61,13 @@ const StudentTimetable = () => {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap');
         @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes spin { to { transform: rotate(360deg); } }
         .tt-card:hover { box-shadow:0 6px 24px rgba(21,128,61,0.12) !important; transform:translateY(-2px); }
       `}</style>
 
       <div style={{ minHeight:"calc(100vh - 64px)", background:G[50], padding:"28px 20px 56px", fontFamily:"'DM Sans',sans-serif" }}>
         <div style={{ maxWidth:900, margin:"0 auto" }}>
 
-          {/* Day tabs */}
           <div style={{ display:"flex", gap:8, marginBottom:24, overflowX:"auto", paddingBottom:4 }}>
             {days.map((day) => {
               const active = selectedDay === day
@@ -81,7 +84,6 @@ const StudentTimetable = () => {
             })}
           </div>
 
-          {/* Card */}
           <div style={{ background:"#fff", borderRadius:18, boxShadow:`0 2px 16px rgba(0,0,0,0.07),0 0 0 1px ${G[100]}`, padding:"28px", animation:"fadeUp 0.4s ease both" }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:22 }}>
               <div style={{ width:3, height:20, borderRadius:2, background:`linear-gradient(to bottom,${G[500]},${G[300]})` }} />

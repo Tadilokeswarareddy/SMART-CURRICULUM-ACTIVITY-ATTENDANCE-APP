@@ -205,7 +205,7 @@ const SmartTask = ({ onStatsRefresh }) => {
                   <div style={{ background:G[50],border:`1.5px solid ${G[200]}`,borderRadius:12,padding:16,marginBottom:14 }}>
                     <label style={{ display:"block",fontSize:10,fontWeight:700,color:G[600],textTransform:"uppercase",letterSpacing:"1.2px",marginBottom:8 }}>
                       Upload Assignment Files
-                      <span style={{ marginLeft:6,fontWeight:400,color:"#9ca3af",textTransform:"none",letterSpacing:0 }}>(PNG, JPG, PDF, TXT — multiple pages supported)</span>
+                      <span style={{ marginLeft:6,fontWeight:400,color:"#9ca3af",textTransform:"none",letterSpacing:0 }}>(PNG, JPG, PDF, TXT)</span>
                     </label>
                     <input
                       type="file"
@@ -258,7 +258,7 @@ const SmartTask = ({ onStatsRefresh }) => {
                     </button>
                     <button onClick={() => markDone(task.id)}
                       style={{ background:G[100],color:G[800],border:`1.5px solid ${G[200]}`,borderRadius:10,padding:"11px 22px",fontSize:14,fontWeight:600,cursor:"pointer" }}>
-                      Mark Done ✓
+                      Mark Done 
                     </button>
                   </div>
                 </div>

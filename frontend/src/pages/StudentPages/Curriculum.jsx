@@ -10,11 +10,10 @@ const Curriculum = () => {
     <>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       <StudentNav />
-      {/* Stats bar above tasks */}
-      <div style={{ maxWidth:820, margin:"0 auto", padding:"24px 24px 0" }}>
+      <SmartTask onStatsRefresh={() => setStatsRefresh(n => n + 1)} />
+      <div style={{ maxWidth:820, margin:"0 auto", padding:"0 24px 48px" }}>
         <TaskStatsWidget refreshTrigger={statsRefresh} />
       </div>
-      <SmartTask onStatsRefresh={() => setStatsRefresh(n => n + 1)} />
     </>
   )
 }
