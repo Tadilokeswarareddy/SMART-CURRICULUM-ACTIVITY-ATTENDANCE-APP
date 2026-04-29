@@ -47,7 +47,6 @@ const card = {
   padding: "26px 24px", marginBottom: 22,
 }
 
-
 const QRModal = ({ value, onClose, qrCounter }) => {
   useEffect(() => {
     const handler = e => { if (e.key === "Escape") onClose() }
@@ -113,7 +112,6 @@ const QRModal = ({ value, onClose, qrCounter }) => {
   )
 }
 
-
 const LiveFeed = ({ presentIds, students }) => {
   const [open, setOpen] = useState(false)
   const presentStudents = students.filter(s => presentIds.includes(s.id))
@@ -123,7 +121,6 @@ const LiveFeed = ({ presentIds, students }) => {
 
   return (
     <div style={{ marginBottom: 16 }}>
-
       <button
         onClick={() => setOpen(o => !o)}
         style={{
@@ -149,7 +146,6 @@ const LiveFeed = ({ presentIds, students }) => {
         </span>
       </button>
 
-  
       {open && (
         <div style={{
           border: `1.5px solid ${G[300]}`, borderTop: "none",
@@ -158,10 +154,9 @@ const LiveFeed = ({ presentIds, students }) => {
           animation: "fadeUp 0.18s ease",
         }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-  
             <div>
               <p style={{ margin: "0 0 8px", fontSize: 10, fontWeight: 700, color: G[600], letterSpacing: "1.2px", textTransform: "uppercase" }}>
-                 Present ({presentStudents.length})
+                Present ({presentStudents.length})
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
                 {presentStudents.map(s => (
@@ -180,10 +175,9 @@ const LiveFeed = ({ presentIds, students }) => {
                 ))}
               </div>
             </div>
-            {/* Absent column */}
             <div>
               <p style={{ margin: "0 0 8px", fontSize: 10, fontWeight: 700, color: "#dc2626", letterSpacing: "1.2px", textTransform: "uppercase" }}>
-                 Not yet scanned ({absentStudents.length})
+                Not yet scanned ({absentStudents.length})
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
                 {absentStudents.map(s => (
@@ -211,35 +205,34 @@ const LiveFeed = ({ presentIds, students }) => {
   )
 }
 
-
 export default function MarkAttendance() {
-  const [assignments,   setAssignments]   = useState([])
-  const [loadingAssign, setLoadingAssign] = useState(true)  
-  const [assignmentId,  setAssignmentId]  = useState("")
-  const [sessionId,     setSessionId]     = useState(null)
-  const [qrValue,       setQrValue]       = useState("")
-  const [isActive,      setIsActive]      = useState(false)
-  const [counter,       setCounter]       = useState(SESSION_DURATION)
-  const [qrCounter,     setQrCounter]     = useState(QR_INTERVAL)
-  const [sessionErr,    setSessionErr]    = useState("")
-  const [students,      setStudents]      = useState([])
-  const [loadingStudents, setLoadingStudents] = useState(false)  
-  const [presentIds,    setPresentIds]    = useState([])
-  const [submitting,    setSubmitting]    = useState(false)
-  const [submitMsg,     setSubmitMsg]     = useState("")
-  const [submitErr,     setSubmitErr]     = useState("")
-  const [tab,           setTab]           = useState("attend")
-  const [sessions,      setSessions]      = useState([])
-  const [sessionDetail, setSessionDetail] = useState(null)
-  const [loadingHist,   setLoadingHist]   = useState(false)
-  const [loadingDetail, setLoadingDetail] = useState(false)
-  const [qrModalOpen,   setQrModalOpen]   = useState(false)   
+  const [assignments,     setAssignments]     = useState([])
+  const [loadingAssign,   setLoadingAssign]   = useState(true)
+  const [assignmentId,    setAssignmentId]    = useState("")
+  const [sessionId,       setSessionId]       = useState(null)
+  const [qrValue,         setQrValue]         = useState("")
+  const [isActive,        setIsActive]        = useState(false)
+  const [counter,         setCounter]         = useState(SESSION_DURATION)
+  const [qrCounter,       setQrCounter]       = useState(QR_INTERVAL)
+  const [sessionErr,      setSessionErr]      = useState("")
+  const [students,        setStudents]        = useState([])
+  const [loadingStudents, setLoadingStudents] = useState(false)
+  const [presentIds,      setPresentIds]      = useState([])
+  const [submitting,      setSubmitting]      = useState(false)
+  const [submitMsg,       setSubmitMsg]       = useState("")
+  const [submitErr,       setSubmitErr]       = useState("")
+  const [tab,             setTab]             = useState("attend")
+  const [sessions,        setSessions]        = useState([])
+  const [sessionDetail,   setSessionDetail]   = useState(null)
+  const [loadingHist,     setLoadingHist]     = useState(false)
+  const [loadingDetail,   setLoadingDetail]   = useState(false)
+  const [qrModalOpen,     setQrModalOpen]     = useState(false)
+  const [qrVisible,       setQrVisible]       = useState(true)   // ← NEW
 
-  const pollRef     = useRef(null)
-  const sessionRef  = useRef(null)
-  const qrRotRef    = useRef(null)
-  const qrBadgeRef  = useRef(null)
-
+  const pollRef    = useRef(null)
+  const sessionRef = useRef(null)
+  const qrRotRef   = useRef(null)
+  const qrBadgeRef = useRef(null)
 
   useEffect(() => {
     setLoadingAssign(true)
@@ -248,7 +241,6 @@ export default function MarkAttendance() {
       .catch(console.error)
       .finally(() => setLoadingAssign(false))
   }, [])
-
 
   useEffect(() => {
     if (!assignmentId) { setStudents([]); return }
@@ -275,6 +267,7 @@ export default function MarkAttendance() {
     setSessions([]); setSessionDetail(null)
     setTab("attend")
     setQrModalOpen(false)
+    setQrVisible(true)   // ← RESET
   }
 
   const stopAllIntervals = () => {
@@ -346,6 +339,7 @@ export default function MarkAttendance() {
       setCounter(SESSION_DURATION)
       setQrCounter(QR_INTERVAL)
       setPresentIds([])
+      setQrVisible(true)   // ← RESET on new session
       startSessionTimer()
       startQrRotation(sid)
       startQrBadge()
@@ -407,6 +401,7 @@ export default function MarkAttendance() {
         @keyframes fadeUp  { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
         @keyframes fadeIn  { from{opacity:0} to{opacity:1} }
         @keyframes popIn   { from{opacity:0;transform:scale(0.88)} to{opacity:1;transform:scale(1)} }
+        @keyframes spin    { to { transform: rotate(360deg); } }
         .ma-tab-active  { border-bottom:2px solid ${G[700]}!important; color:${G[700]}!important; }
         .ma-tab:hover   { color:${G[600]}!important; }
         .ma-row:hover   { border-color:${G[300]}!important; }
@@ -485,6 +480,7 @@ export default function MarkAttendance() {
               ))}
             </div>
           )}
+
           {assignmentId && tab === "attend" && (
             <>
               <ErrBox msg={sessionErr} />
@@ -526,44 +522,96 @@ export default function MarkAttendance() {
                       </div>
                     </div>
 
-                    {/* Clickable QR */}
+                    {/* ── QR visible/hidden toggle ── */}
                     {isActive && qrValue && (
                       <>
-                        <div
-                          onClick={() => setQrModalOpen(true)}
-                          className="qr-hover"
-                          title="Click to expand for projector"
-                          style={{
-                            position: "relative", display: "inline-block", marginBottom: 8,
-                            cursor: "pointer",
-                          }}
-                        >
-                          <div style={{ padding: 12, background: G[50], borderRadius: 14, border: `1.5px solid ${G[200]}` }}>
-                            <QRCodeCanvas value={qrValue} size={180} key={qrValue} />
-                          </div>
-
-                          {/* Refresh countdown badge */}
-                          <div style={{
-                            position: "absolute", top: -10, right: -10,
-                            background: qrCounter <= 2 ? "#dc2626" : G[700],
-                            color: "#fff", borderRadius: "50%", width: 36, height: 36,
-                            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                            fontSize: 13, fontWeight: 700, lineHeight: 1,
-                            boxShadow: "0 2px 8px rgba(0,0,0,0.2)", transition: "background 0.3s",
-                          }}>
-                            {qrCounter}
-                            <span style={{ fontSize: 7, opacity: 0.85 }}>sec</span>
-                          </div>
-
-                          {/* Expand hint */}
-                          <div style={{
-                            position: "absolute", bottom: -10, left: "50%", transform: "translateX(-50%)",
-                            background: G[700], color: "#fff", borderRadius: 999,
-                            padding: "2px 10px", fontSize: 10, fontWeight: 700, whiteSpace: "nowrap",
-                            boxShadow: "0 2px 6px rgba(0,0,0,0.18)",
-                          }}>⛶ Click to expand</div>
+                        {/* Toggle button */}
+                        <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+                          <button
+                            onClick={() => setQrVisible(v => !v)}
+                            style={{
+                              display: "flex", alignItems: "center", gap: 6,
+                              background: qrVisible ? "#fef2f2" : G[100],
+                              border: `1.5px solid ${qrVisible ? "#fecaca" : G[300]}`,
+                              color: qrVisible ? "#dc2626" : G[700],
+                              borderRadius: 8, padding: "6px 16px",
+                              fontSize: 12, fontWeight: 700, cursor: "pointer",
+                              fontFamily: "'DM Sans',sans-serif",
+                              transition: "all 0.18s",
+                            }}
+                          >
+                            {qrVisible ? (
+                              <>
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <line x1="1" y1="1" x2="23" y2="23"/><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                                </svg>
+                                Hide QR
+                              </>
+                            ) : (
+                              <>
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                                </svg>
+                                Show QR
+                              </>
+                            )}
+                          </button>
                         </div>
 
+                        {/* Clickable QR (conditionally shown) */}
+                        {qrVisible && (
+                          <div
+                            onClick={() => setQrModalOpen(true)}
+                            className="qr-hover"
+                            title="Click to expand for projector"
+                            style={{
+                              position: "relative", display: "inline-block", marginBottom: 8,
+                              cursor: "pointer",
+                            }}
+                          >
+                            <div style={{ padding: 12, background: G[50], borderRadius: 14, border: `1.5px solid ${G[200]}` }}>
+                              <QRCodeCanvas value={qrValue} size={180} key={qrValue} />
+                            </div>
+
+                            {/* Refresh countdown badge */}
+                            <div style={{
+                              position: "absolute", top: -10, right: -10,
+                              background: qrCounter <= 2 ? "#dc2626" : G[700],
+                              color: "#fff", borderRadius: "50%", width: 36, height: 36,
+                              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                              fontSize: 13, fontWeight: 700, lineHeight: 1,
+                              boxShadow: "0 2px 8px rgba(0,0,0,0.2)", transition: "background 0.3s",
+                            }}>
+                              {qrCounter}
+                              <span style={{ fontSize: 7, opacity: 0.85 }}>sec</span>
+                            </div>
+
+                            {/* Expand hint */}
+                            <div style={{
+                              position: "absolute", bottom: -10, left: "50%", transform: "translateX(-50%)",
+                              background: G[700], color: "#fff", borderRadius: 999,
+                              padding: "2px 10px", fontSize: 10, fontWeight: 700, whiteSpace: "nowrap",
+                              boxShadow: "0 2px 6px rgba(0,0,0,0.18)",
+                            }}>⛶ Click to expand</div>
+                          </div>
+                        )}
+
+                        {/* Placeholder when hidden */}
+                        {!qrVisible && (
+                          <div style={{
+                            display: "inline-flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                            width: 204, height: 204, borderRadius: 14,
+                            border: `2px dashed ${G[300]}`, background: G[50],
+                            color: G[400], fontSize: 12, fontWeight: 600, gap: 8,
+                            marginBottom: 8,
+                          }}>
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                              <rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M17 20h3M20 17v3"/>
+                            </svg>
+                            QR hidden
+                          </div>
+                        )}
                       </>
                     )}
 
@@ -593,90 +641,90 @@ export default function MarkAttendance() {
 
                   {/* Right column: LiveFeed + Student List */}
                   <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-                  <LiveFeed presentIds={presentIds} students={students} />
+                    <LiveFeed presentIds={presentIds} students={students} />
 
-                  {/* Student List Panel */}
-                  <div style={{ ...card, marginBottom: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-                      <Heading label="Student List" />
-                      <div style={{ display: "flex", gap: 14, marginBottom: 20 }}>
-                        <button onClick={() => setPresentIds(students.map(s => s.id))}
-                          style={{ background: "none", border: "none", color: G[700], fontSize: 12, fontWeight: 700, cursor: "pointer", textDecoration: "underline", padding: 0, fontFamily: "'DM Sans',sans-serif" }}>All Present</button>
-                        <button onClick={() => setPresentIds([])}
-                          style={{ background: "none", border: "none", color: "#dc2626", fontSize: 12, fontWeight: 700, cursor: "pointer", textDecoration: "underline", padding: 0, fontFamily: "'DM Sans',sans-serif" }}>All Absent</button>
+                    {/* Student List Panel */}
+                    <div style={{ ...card, marginBottom: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+                        <Heading label="Student List" />
+                        <div style={{ display: "flex", gap: 14, marginBottom: 20 }}>
+                          <button onClick={() => setPresentIds(students.map(s => s.id))}
+                            style={{ background: "none", border: "none", color: G[700], fontSize: 12, fontWeight: 700, cursor: "pointer", textDecoration: "underline", padding: 0, fontFamily: "'DM Sans',sans-serif" }}>All Present</button>
+                          <button onClick={() => setPresentIds([])}
+                            style={{ background: "none", border: "none", color: "#dc2626", fontSize: 12, fontWeight: 700, cursor: "pointer", textDecoration: "underline", padding: 0, fontFamily: "'DM Sans',sans-serif" }}>All Absent</button>
+                        </div>
                       </div>
-                    </div>
 
-                    <p style={{ fontSize: 12, color: "#6b7280", margin: "0 0 12px" }}>
-                      Students who scan the QR flip to <strong style={{ color: G[700] }}>Present</strong> automatically. Toggle anyone to override.
-                    </p>
+                      <p style={{ fontSize: 12, color: "#6b7280", margin: "0 0 12px" }}>
+                        Students who scan the QR flip to <strong style={{ color: G[700] }}>Present</strong> automatically. Toggle anyone to override.
+                      </p>
 
-                    {loadingStudents ? (
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, padding: "28px 0", color: "#9ca3af", fontSize: 13 }}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" style={{ animation: "spin 1s linear infinite" }}>
-                          <circle cx="12" cy="12" r="10" fill="none" stroke={G[200]} strokeWidth="3" />
-                          <path d="M12 2a10 10 0 0 1 10 10" fill="none" stroke={G[500]} strokeWidth="3" strokeLinecap="round" />
-                        </svg>
-                        Loading students…
-                      </div>
-                    ) : students.length === 0 ? (
-                      <p style={{ color: "#9ca3af", fontSize: 13, textAlign: "center", padding: "24px 0" }}>No students found in this section.</p>
-                    ) : (
-                      <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 380, overflowY: "auto", marginBottom: 18, paddingRight: 2 }}>
-                        {students.map(s => {
-                          const present = presentIds.includes(s.id)
-                          return (
-                            <div key={s.id} onClick={() => toggleStudent(s.id)} className="ma-row"
-                              style={{
-                                display: "flex", alignItems: "center", justifyContent: "space-between",
-                                padding: "11px 13px", borderRadius: 10,
-                                border: `1.5px solid ${present ? G[300] : G[200]}`,
-                                background: present ? G[50] : "#fff",
-                                cursor: "pointer", transition: "all 0.12s",
-                              }}>
-                              <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
-                                <div style={{
-                                  width: 17, height: 17, borderRadius: 5,
-                                  border: `2px solid ${present ? G[600] : G[300]}`,
-                                  background: present ? G[600] : "transparent",
-                                  display: "flex", alignItems: "center", justifyContent: "center",
-                                  flexShrink: 0, transition: "all 0.12s",
+                      {loadingStudents ? (
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, padding: "28px 0", color: "#9ca3af", fontSize: 13 }}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" style={{ animation: "spin 1s linear infinite" }}>
+                            <circle cx="12" cy="12" r="10" fill="none" stroke={G[200]} strokeWidth="3" />
+                            <path d="M12 2a10 10 0 0 1 10 10" fill="none" stroke={G[500]} strokeWidth="3" strokeLinecap="round" />
+                          </svg>
+                          Loading students…
+                        </div>
+                      ) : students.length === 0 ? (
+                        <p style={{ color: "#9ca3af", fontSize: 13, textAlign: "center", padding: "24px 0" }}>No students found in this section.</p>
+                      ) : (
+                        <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 380, overflowY: "auto", marginBottom: 18, paddingRight: 2 }}>
+                          {students.map(s => {
+                            const present = presentIds.includes(s.id)
+                            return (
+                              <div key={s.id} onClick={() => toggleStudent(s.id)} className="ma-row"
+                                style={{
+                                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                                  padding: "11px 13px", borderRadius: 10,
+                                  border: `1.5px solid ${present ? G[300] : G[200]}`,
+                                  background: present ? G[50] : "#fff",
+                                  cursor: "pointer", transition: "all 0.12s",
                                 }}>
-                                  {present && <span style={{ color: "#fff", fontSize: 10, fontWeight: 900, lineHeight: 1 }}>✓</span>}
+                                <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
+                                  <div style={{
+                                    width: 17, height: 17, borderRadius: 5,
+                                    border: `2px solid ${present ? G[600] : G[300]}`,
+                                    background: present ? G[600] : "transparent",
+                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                    flexShrink: 0, transition: "all 0.12s",
+                                  }}>
+                                    {present && <span style={{ color: "#fff", fontSize: 10, fontWeight: 900, lineHeight: 1 }}>✓</span>}
+                                  </div>
+                                  <div>
+                                    <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: G[800] }}>{s.full_name}</p>
+                                    <p style={{ margin: 0, fontSize: 11, color: "#9ca3af" }}>{s.roll_number}</p>
+                                  </div>
                                 </div>
-                                <div>
-                                  <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: G[800] }}>{s.full_name}</p>
-                                  <p style={{ margin: 0, fontSize: 11, color: "#9ca3af" }}>{s.roll_number}</p>
-                                </div>
+                                <Pill ok={present} />
                               </div>
-                              <Pill ok={present} />
-                            </div>
-                          )
-                        })}
-                      </div>
-                    )}
+                            )
+                          })}
+                        </div>
+                      )}
 
-                    <button onClick={submitAttendance} disabled={submitting || students.length === 0}
-                      style={{
-                        width: "100%", background: G[700], color: "#fff", border: "none",
-                        borderRadius: 10, padding: "12px 0", fontSize: 14, fontWeight: 700,
-                        cursor: (submitting || students.length === 0) ? "not-allowed" : "pointer",
-                        opacity: (submitting || students.length === 0) ? 0.5 : 1,
-                        fontFamily: "'DM Sans',sans-serif", transition: "opacity 0.2s",
-                      }}>
-                      {submitting ? "Submitting…" : `Submit Attendance (${presentCount} Present)`}
-                    </button>
-                    <p style={{ fontSize: 11, color: "#9ca3af", textAlign: "center", margin: "8px 0 0" }}>
-                      Submitting will close the session and save to records.
-                    </p>
-                  </div>
+                      <button onClick={submitAttendance} disabled={submitting || students.length === 0}
+                        style={{
+                          width: "100%", background: G[700], color: "#fff", border: "none",
+                          borderRadius: 10, padding: "12px 0", fontSize: 14, fontWeight: 700,
+                          cursor: (submitting || students.length === 0) ? "not-allowed" : "pointer",
+                          opacity: (submitting || students.length === 0) ? 0.5 : 1,
+                          fontFamily: "'DM Sans',sans-serif", transition: "opacity 0.2s",
+                        }}>
+                        {submitting ? "Submitting…" : `Submit Attendance (${presentCount} Present)`}
+                      </button>
+                      <p style={{ fontSize: 11, color: "#9ca3af", textAlign: "center", margin: "8px 0 0" }}>
+                        Submitting will close the session and save to records.
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
             </>
           )}
 
-          {/* ── History Tab ─────────────────────────────────────────────────── */}
+          {/* History Tab */}
           {assignmentId && tab === "history" && (
             <div style={{ ...card, animation: "fadeUp 0.4s ease both" }}>
               <Heading label="Attendance History" />
@@ -755,9 +803,6 @@ export default function MarkAttendance() {
           )}
         </div>
       </div>
-
-
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </>
   )
 }

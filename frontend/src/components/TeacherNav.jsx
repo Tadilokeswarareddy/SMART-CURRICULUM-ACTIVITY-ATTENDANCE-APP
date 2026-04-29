@@ -86,7 +86,6 @@ const TeacherNav = () => {
             Logout
           </Link>
 
-          {/* Mobile hamburger */}
           <button onClick={() => setOpen(!open)}
             className="tn-hamburger tn-show-mob"
             style={{
@@ -100,7 +99,6 @@ const TeacherNav = () => {
           </button>
         </div>
 
-        {/* Mobile dropdown */}
         {open && (
           <div style={{
             background:"#fff", borderTop:`1px solid ${G[100]}`,
