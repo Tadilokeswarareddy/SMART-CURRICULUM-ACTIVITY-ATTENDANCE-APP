@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useCallback } from "react"
 import Teachermessage from "../../components/Teachermessages"
 import TeacherNav from "../../components/TeacherNav"
 import api from "../../api"
@@ -16,15 +16,199 @@ const Heading = ({ label }) => (
   </div>
 )
 
+const ErrBox = ({ msg }) => msg ? (
+  <div style={{ background:"#fef2f2", border:"1.5px solid #fecaca", color:"#dc2626", borderRadius:10, padding:"10px 14px", marginBottom:12, fontSize:13, fontFamily:"'DM Sans',sans-serif" }}>{msg}</div>
+) : null
+
+// ── Mode toggle pill ──────────────────────────────────────────────────────────
+const ModeToggle = ({ mode, onChange }) => (
+  <div style={{ display:"flex", background:G[50], border:`1.5px solid ${G[200]}`, borderRadius:12, padding:4, gap:4, marginBottom:20 }}>
+    {[
+      { key:"sections", label:"📢 Sections" },
+      { key:"students", label:"👤 Students" },
+    ].map(({ key, label }) => (
+      <button key={key} onClick={() => onChange(key)}
+        style={{
+          flex:1, padding:"8px 0", border:"none", borderRadius:9, fontSize:13, fontWeight:700,
+          fontFamily:"'DM Sans',sans-serif", cursor:"pointer", transition:"all 0.18s",
+          background: mode === key ? G[700] : "transparent",
+          color:      mode === key ? "#fff"  : G[600],
+        }}>{label}</button>
+    ))}
+  </div>
+)
+
+// ── Section checkbox list ─────────────────────────────────────────────────────
+const SectionPicker = ({ sections, selected, onChange }) => (
+  <div style={{ marginBottom:14 }}>
+    <label style={{ display:"block", fontSize:10, fontWeight:700, color:G[600], textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:8 }}>
+      Select Sections (multiple allowed)
+    </label>
+    <div style={{ display:"flex", flexDirection:"column", gap:6, maxHeight:180, overflowY:"auto", paddingRight:2 }}>
+      {sections.map(s => {
+        const checked = selected.includes(s.id)
+        return (
+          <label key={s.id}
+            style={{
+              display:"flex", alignItems:"center", gap:10,
+              padding:"9px 12px", borderRadius:10, cursor:"pointer",
+              border:`1.5px solid ${checked ? G[400] : G[200]}`,
+              background: checked ? G[50] : "#fff",
+              transition:"all 0.14s",
+            }}>
+            <div style={{
+              width:17, height:17, borderRadius:5, flexShrink:0,
+              border:`2px solid ${checked ? G[600] : G[300]}`,
+              background: checked ? G[600] : "transparent",
+              display:"flex", alignItems:"center", justifyContent:"center",
+              transition:"all 0.12s",
+            }}>
+              {checked && <span style={{ color:"#fff", fontSize:10, fontWeight:900, lineHeight:1 }}>✓</span>}
+            </div>
+            <input type="checkbox" checked={checked} onChange={() => {
+              onChange(checked ? selected.filter(id => id !== s.id) : [...selected, s.id])
+            }} style={{ display:"none" }} />
+            <span style={{ fontSize:13, fontWeight:600, color:G[800] }}>{s.branch?.name} — {s.name}</span>
+          </label>
+        )
+      })}
+    </div>
+  </div>
+)
+
+// ── Student picker (loads per selected sections) ──────────────────────────────
+const StudentPicker = ({ sections, selectedSections, selectedStudents, onChange }) => {
+  const [studentsBySec, setStudentsBySec] = useState({})
+  const [loading, setLoading] = useState(false)
+  const [search, setSearch] = useState("")
+
+  const fetchStudents = useCallback(async (sectionIds) => {
+    setLoading(true)
+    const results = {}
+    await Promise.all(sectionIds.map(async sid => {
+      if (studentsBySec[sid]) { results[sid] = studentsBySec[sid]; return }
+      try {
+        const r = await api.get(`/api/messages/sections/${sid}/students/`)
+        results[sid] = r.data
+      } catch { results[sid] = [] }
+    }))
+    setStudentsBySec(prev => ({ ...prev, ...results }))
+    setLoading(false)
+  }, [studentsBySec])
+
+  useEffect(() => {
+    if (selectedSections.length > 0) fetchStudents(selectedSections)
+  }, [selectedSections])
+
+  const allStudents = selectedSections.flatMap(sid => studentsBySec[sid] || [])
+  const filtered    = allStudents.filter(s =>
+    s.full_name.toLowerCase().includes(search.toLowerCase()) ||
+    s.roll_number?.toLowerCase().includes(search.toLowerCase())
+  )
+
+  const toggleAll = () => {
+    const allIds = filtered.map(s => s.id)
+    const allSelected = allIds.every(id => selectedStudents.includes(id))
+    if (allSelected) onChange(selectedStudents.filter(id => !allIds.includes(id)))
+    else onChange([...new Set([...selectedStudents, ...allIds])])
+  }
+
+  return (
+    <div style={{ marginBottom:14 }}>
+      {/* Section selector for student mode */}
+      <label style={{ display:"block", fontSize:10, fontWeight:700, color:G[600], textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:8 }}>
+        1 · Pick section(s) to load students from
+      </label>
+      <SectionPicker sections={sections} selected={selectedSections} onChange={sids => {
+        // deselect students that no longer belong to selected sections
+        const remaining = Object.entries(studentsBySec)
+          .filter(([sid]) => sids.includes(parseInt(sid)))
+          .flatMap(([, studs]) => studs.map(s => s.id))
+        onChange(selectedStudents.filter(id => remaining.includes(id)))
+        // (parent handles selectedSections update)
+        // we bubble up via the prop — parent must pass setSelectedSections here
+      }} />
+
+      {selectedSections.length > 0 && (
+        <>
+          <label style={{ display:"block", fontSize:10, fontWeight:700, color:G[600], textTransform:"uppercase", letterSpacing:"1.2px", margin:"14px 0 8px" }}>
+            2 · Pick individual students
+          </label>
+          <input
+            placeholder="Search by name or roll number…"
+            value={search} onChange={e => setSearch(e.target.value)}
+            style={{ display:"block", width:"100%", boxSizing:"border-box", padding:"9px 12px", marginBottom:8, borderRadius:9, border:`1.5px solid ${G[200]}`, fontSize:13, color:G[900], fontFamily:"'DM Sans',sans-serif", background:G[50] }}
+          />
+          {loading ? (
+            <p style={{ fontSize:12, color:"#9ca3af", padding:"8px 0" }}>Loading students…</p>
+          ) : filtered.length === 0 ? (
+            <p style={{ fontSize:12, color:"#9ca3af", padding:"8px 0" }}>No students found.</p>
+          ) : (
+            <>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6 }}>
+                <span style={{ fontSize:11, color:"#9ca3af" }}>{selectedStudents.length} selected</span>
+                <button onClick={toggleAll}
+                  style={{ background:"none", border:"none", color:G[700], fontSize:12, fontWeight:700, cursor:"pointer", textDecoration:"underline", padding:0, fontFamily:"'DM Sans',sans-serif" }}>
+                  {filtered.every(s => selectedStudents.includes(s.id)) ? "Deselect All" : "Select All"}
+                </button>
+              </div>
+              <div style={{ display:"flex", flexDirection:"column", gap:5, maxHeight:220, overflowY:"auto", paddingRight:2 }}>
+                {filtered.map(s => {
+                  const checked = selectedStudents.includes(s.id)
+                  return (
+                    <label key={s.id}
+                      style={{
+                        display:"flex", alignItems:"center", gap:10,
+                        padding:"8px 12px", borderRadius:9, cursor:"pointer",
+                        border:`1.5px solid ${checked ? G[400] : G[100]}`,
+                        background: checked ? G[50] : "#fff",
+                        transition:"all 0.12s",
+                      }}>
+                      <div style={{
+                        width:16, height:16, borderRadius:4, flexShrink:0,
+                        border:`2px solid ${checked ? G[600] : G[300]}`,
+                        background: checked ? G[600] : "transparent",
+                        display:"flex", alignItems:"center", justifyContent:"center",
+                        transition:"all 0.12s",
+                      }}>
+                        {checked && <span style={{ color:"#fff", fontSize:9, fontWeight:900, lineHeight:1 }}>✓</span>}
+                      </div>
+                      <input type="checkbox" checked={checked} onChange={() =>
+                        onChange(checked ? selectedStudents.filter(id => id !== s.id) : [...selectedStudents, s.id])
+                      } style={{ display:"none" }} />
+                      <div>
+                        <p style={{ margin:0, fontSize:12, fontWeight:700, color:G[800] }}>{s.full_name}</p>
+                        <p style={{ margin:0, fontSize:10, color:"#9ca3af" }}>{s.roll_number}</p>
+                      </div>
+                    </label>
+                  )
+                })}
+              </div>
+            </>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
 const TeacherMessagesMain = () => {
-  const [messages, setMessages]     = useState([])
-  const [loading, setLoading]       = useState(true)
-  const [showForm, setShowForm]     = useState(false)
-  const [sections, setSections]     = useState([])
-  const [form, setForm]             = useState({ title:"", message:"", target_section:"" })
-  const [sending, setSending]       = useState(false)
-  const [sendError, setSendError]   = useState("")
-  const [sendSuccess, setSendSuccess] = useState("")
+  const [messages,     setMessages]     = useState([])
+  const [loading,      setLoading]      = useState(true)
+  const [showForm,     setShowForm]     = useState(false)
+  const [sections,     setSections]     = useState([])
+
+  // compose form state
+  const [mode,             setMode]             = useState("sections") // "sections" | "students"
+  const [selectedSections, setSelectedSections] = useState([])
+  const [selectedStudents, setSelectedStudents] = useState([])
+  const [title,            setTitle]            = useState("")
+  const [message,          setMessage]          = useState("")
+
+  const [sending,      setSending]      = useState(false)
+  const [sendError,    setSendError]    = useState("")
+  const [sendSuccess,  setSendSuccess]  = useState("")
 
   useEffect(() => { fetchMessages(); fetchTeacherSections() }, [])
 
@@ -44,14 +228,44 @@ const TeacherMessagesMain = () => {
       .catch(err => console.error(err))
   }
 
+  const resetForm = () => {
+    setTitle(""); setMessage("")
+    setSelectedSections([]); setSelectedStudents([])
+    setMode("sections"); setSendError("")
+  }
+
   const handleSend = async () => {
-    if (!form.title || !form.message || !form.target_section) { setSendError("All fields are required"); return }
-    setSending(true); setSendError(""); setSendSuccess("")
+    setSendError("")
+    if (!title.trim() || !message.trim()) { setSendError("Title and message are required"); return }
+
+    if (mode === "sections" && selectedSections.length === 0) {
+      setSendError("Select at least one section"); return
+    }
+    if (mode === "students" && selectedStudents.length === 0) {
+      setSendError("Select at least one student"); return
+    }
+
+    const payload = {
+      title:           title.trim(),
+      message:         message.trim(),
+      target_sections: mode === "sections" ? selectedSections : [],
+      target_students: mode === "students" ? selectedStudents : [],
+    }
+
+    setSending(true)
     try {
-      await api.post("/api/messages/send/", { title:form.title, message:form.message, target_section:parseInt(form.target_section) })
-      setForm({ title:"", message:"", target_section:"" })
-      setShowForm(false); setSendSuccess("Message sent successfully!"); fetchMessages()
-    } catch (err) { setSendError(err.response?.data?.error || "Failed to send message") }
+      await api.post("/api/messages/send/", payload)
+      resetForm()
+      setShowForm(false)
+      setSendSuccess(
+        mode === "sections"
+          ? `Message sent to ${selectedSections.length} section${selectedSections.length !== 1 ? "s" : ""}!`
+          : `Message sent to ${selectedStudents.length} student${selectedStudents.length !== 1 ? "s" : ""}!`
+      )
+      fetchMessages()
+    } catch (err) {
+      setSendError(err.response?.data?.error || "Failed to send message")
+    }
     setSending(false)
   }
 
@@ -61,11 +275,13 @@ const TeacherMessagesMain = () => {
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap');
         @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
         .tm-field:focus { border-color:${G[400]}!important; box-shadow:0 0 0 3px ${G[100]}!important; outline:none; }
+        .tm-field { transition: border-color 0.2s, box-shadow 0.2s; }
       `}</style>
 
       <div style={{ minHeight:"100vh", background:G[50], fontFamily:"'DM Sans',sans-serif" }}>
         <TeacherNav />
 
+        {/* Header */}
         <div style={{
           position:"relative",
           background:`linear-gradient(135deg,${G[900]} 0%,${G[700]} 50%,${G[500]} 100%)`,
@@ -87,17 +303,18 @@ const TeacherMessagesMain = () => {
 
         <div style={{ maxWidth:700, margin:"0 auto", padding:"32px 24px 56px" }}>
 
+          {/* Toolbar */}
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20, animation:"fadeUp 0.5s ease both" }}>
             <div style={{ display:"flex", alignItems:"center", gap:10 }}>
               <div style={{ width:3, height:22, borderRadius:2, background:`linear-gradient(to bottom,${G[500]},${G[300]})`, flexShrink:0 }}/>
               <h2 style={{ margin:0, fontSize:18, fontWeight:700, color:G[900], fontFamily:"'DM Serif Display',serif" }}>Inbox</h2>
             </div>
             <button
-              onClick={() => { setShowForm(!showForm); setSendError(""); setSendSuccess("") }}
+              onClick={() => { setShowForm(!showForm); resetForm(); setSendSuccess("") }}
               style={{
                 background: showForm ? G[50] : G[700],
-                color: showForm ? G[700] : "#fff",
-                border: showForm ? `1.5px solid ${G[200]}` : "none",
+                color:      showForm ? G[700] : "#fff",
+                border:     showForm ? `1.5px solid ${G[200]}` : "none",
                 borderRadius:10, padding:"9px 20px", fontSize:13, fontWeight:600,
                 fontFamily:"'DM Sans',sans-serif", cursor:"pointer", transition:"all 0.2s",
               }}>
@@ -105,50 +322,80 @@ const TeacherMessagesMain = () => {
             </button>
           </div>
 
+          {/* Success banner */}
           {sendSuccess && !showForm && (
             <div style={{ background:G[100], border:`1px solid ${G[300]}`, color:G[700], borderRadius:10, padding:"10px 16px", fontSize:13, fontWeight:600, marginBottom:16, animation:"fadeUp 0.35s ease both" }}>
-              {sendSuccess}
+              ✅ {sendSuccess}
             </div>
           )}
 
+          {/* Compose form */}
           {showForm && (
             <div style={{ background:"#fff", borderRadius:18, boxShadow:`0 2px 16px rgba(0,0,0,0.07),0 0 0 1px ${G[100]}`, padding:"28px", marginBottom:20, animation:"fadeUp 0.38s ease both" }}>
-              <Heading label="Send Message to Section" />
+              <Heading label="New Message" />
 
-              {[
-                { tag:"select", value:form.target_section, onChange:e=>setForm({...form,target_section:e.target.value}), children: (
-                  <>
-                    <option value="">Select Section</option>
-                    {sections.map(s => <option key={s.id} value={s.id}>{s.name} — {s.branch?.name}</option>)}
-                  </>
-                )},
-              ].map((_, i) => null)}
+              {/* Mode toggle */}
+              <ModeToggle mode={mode} onChange={m => { setMode(m); setSelectedSections([]); setSelectedStudents([]) }} />
 
-              <select value={form.target_section} onChange={e => setForm({...form,target_section:e.target.value})}
+              {/* Section mode */}
+              {mode === "sections" && (
+                <SectionPicker
+                  sections={sections}
+                  selected={selectedSections}
+                  onChange={setSelectedSections}
+                />
+              )}
+
+              {/* Student mode */}
+              {mode === "students" && (
+                <StudentPicker
+                  sections={sections}
+                  selectedSections={selectedSections}
+                  selectedStudents={selectedStudents}
+                  onChange={setSelectedStudents}
+                  // pass section setter so student picker can update parent
+                  onSectionsChange={sids => {
+                    setSelectedSections(sids)
+                  }}
+                />
+              )}
+
+              {/* Title */}
+              <input
+                type="text" placeholder="Title" value={title}
+                onChange={e => setTitle(e.target.value)}
                 className="tm-field"
-                style={{ display:"block", width:"100%", boxSizing:"border-box", padding:"10px 14px", marginBottom:12, borderRadius:10, border:`1.5px solid ${G[200]}`, fontSize:13, color:G[900], fontFamily:"'DM Sans',sans-serif", background:G[50], transition:"border-color 0.2s,box-shadow 0.2s" }}>
-                <option value="">Select Section</option>
-                {sections.map(s => <option key={s.id} value={s.id}>{s.name} — {s.branch?.name}</option>)}
-              </select>
+                style={{ display:"block", width:"100%", boxSizing:"border-box", padding:"10px 14px", marginBottom:12, borderRadius:10, border:`1.5px solid ${G[200]}`, fontSize:13, color:G[900], fontFamily:"'DM Sans',sans-serif", background:G[50] }}
+              />
 
-              <input type="text" placeholder="Title" value={form.title} onChange={e => setForm({...form,title:e.target.value})}
+              {/* Message */}
+              <textarea
+                placeholder="Message" value={message} rows={4}
+                onChange={e => setMessage(e.target.value)}
                 className="tm-field"
-                style={{ display:"block", width:"100%", boxSizing:"border-box", padding:"10px 14px", marginBottom:12, borderRadius:10, border:`1.5px solid ${G[200]}`, fontSize:13, color:G[900], fontFamily:"'DM Sans',sans-serif", background:G[50], transition:"border-color 0.2s,box-shadow 0.2s" }}/>
+                style={{ display:"block", width:"100%", boxSizing:"border-box", padding:"10px 14px", marginBottom:12, borderRadius:10, border:`1.5px solid ${G[200]}`, fontSize:13, color:G[900], fontFamily:"'DM Sans',sans-serif", background:G[50], resize:"none" }}
+              />
 
-              <textarea placeholder="Message" value={form.message} onChange={e => setForm({...form,message:e.target.value})} rows={4}
-                className="tm-field"
-                style={{ display:"block", width:"100%", boxSizing:"border-box", padding:"10px 14px", marginBottom:12, borderRadius:10, border:`1.5px solid ${G[200]}`, fontSize:13, color:G[900], fontFamily:"'DM Sans',sans-serif", background:G[50], resize:"none", transition:"border-color 0.2s,box-shadow 0.2s" }}/>
+              {/* Summary pill */}
+              {(selectedSections.length > 0 || selectedStudents.length > 0) && (
+                <div style={{ background:G[50], border:`1.5px solid ${G[200]}`, borderRadius:10, padding:"8px 14px", marginBottom:12, fontSize:12, color:G[700], fontWeight:600 }}>
+                  {mode === "sections"
+                    ? `📢 Sending to ${selectedSections.length} section${selectedSections.length !== 1 ? "s" : ""}`
+                    : `👤 Sending to ${selectedStudents.length} student${selectedStudents.length !== 1 ? "s" : ""}`
+                  }
+                </div>
+              )}
 
-              {sendError && <p style={{ color:"#dc2626", fontSize:12, marginBottom:10 }}>{sendError}</p>}
+              <ErrBox msg={sendError} />
 
               <button onClick={handleSend} disabled={sending}
-                style={{ background:G[700], color:"#fff", border:"none", borderRadius:10, padding:"11px 0", fontSize:14, fontWeight:600, cursor:"pointer", width:"100%", opacity:sending?0.5:1, fontFamily:"'DM Sans',sans-serif", transition:"opacity 0.2s" }}>
-                {sending ? "Sending…" : "Send"}
+                style={{ background:G[700], color:"#fff", border:"none", borderRadius:10, padding:"11px 0", fontSize:14, fontWeight:600, cursor:"pointer", width:"100%", opacity:sending ? 0.5 : 1, fontFamily:"'DM Sans',sans-serif", transition:"opacity 0.2s" }}>
+                {sending ? "Sending…" : "Send Message"}
               </button>
             </div>
           )}
 
-          
+          {/* Inbox */}
           <div style={{ background:"#fff", borderRadius:18, boxShadow:`0 2px 16px rgba(0,0,0,0.07),0 0 0 1px ${G[100]}`, padding:"28px", animation:"fadeUp 0.44s ease both", animationDelay:"0.08s" }}>
             <Heading label="Inbox" />
             <div style={{ display:"flex", flexDirection:"column", gap:0, maxHeight:520, overflowY:"auto" }}>
@@ -158,8 +405,16 @@ const TeacherMessagesMain = () => {
                 <p style={{ textAlign:"center", color:G[400], fontSize:13, padding:"24px 0" }}>No messages yet.</p>
               ) : (
                 messages.map(msg => (
-                  <Teachermessage key={msg.id} title={msg.title} message={msg.message}
-                    senderName={msg.sent_by_name} senderType={msg.sender_type} date={msg.created_at}/>
+                  <Teachermessage
+                    key={msg.id}
+                    title={msg.title}
+                    message={msg.message}
+                    senderName={msg.sent_by_name}
+                    senderType={msg.sender_type}
+                    date={msg.created_at}
+                    sectionNames={msg.section_names}
+                    studentNames={msg.student_names}
+                  />
                 ))
               )}
             </div>

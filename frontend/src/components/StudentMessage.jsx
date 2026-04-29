@@ -1,6 +1,4 @@
-// ─────────────────────────────────────────────
-//  StudentMessage.jsx
-// ─────────────────────────────────────────────
+
 import React from "react"
 
 const G = {
@@ -32,9 +30,3 @@ const StudentMessage = ({ title, message, senderName, senderType, date }) => {
 
 export default StudentMessage
 
-
-// ─────────────────────────────────────────────
-//  StudentMessageMain.jsx
-// ─────────────────────────────────────────────
-// NOTE: Export the component separately in your project.
-// This file shows both for reference.
