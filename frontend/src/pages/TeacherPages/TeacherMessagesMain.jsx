@@ -325,7 +325,7 @@ const TeacherMessagesMain = () => {
           {/* Success banner */}
           {sendSuccess && !showForm && (
             <div style={{ background:G[100], border:`1px solid ${G[300]}`, color:G[700], borderRadius:10, padding:"10px 16px", fontSize:13, fontWeight:600, marginBottom:16, animation:"fadeUp 0.35s ease both" }}>
-              ✅ {sendSuccess}
+               {sendSuccess}
             </div>
           )}
 
