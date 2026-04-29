@@ -115,24 +115,20 @@ const StudentPicker = ({ sections, selectedSections, selectedStudents, onChange 
 
   return (
     <div style={{ marginBottom:14 }}>
-      {/* Section selector for student mode */}
       <label style={{ display:"block", fontSize:10, fontWeight:700, color:G[600], textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:8 }}>
         1 · Pick section(s) to load students from
       </label>
       <SectionPicker sections={sections} selected={selectedSections} onChange={sids => {
-        // deselect students that no longer belong to selected sections
         const remaining = Object.entries(studentsBySec)
           .filter(([sid]) => sids.includes(parseInt(sid)))
           .flatMap(([, studs]) => studs.map(s => s.id))
         onChange(selectedStudents.filter(id => remaining.includes(id)))
-        // (parent handles selectedSections update)
-        // we bubble up via the prop — parent must pass setSelectedSections here
       }} />
 
       {selectedSections.length > 0 && (
         <>
           <label style={{ display:"block", fontSize:10, fontWeight:700, color:G[600], textTransform:"uppercase", letterSpacing:"1.2px", margin:"14px 0 8px" }}>
-            2 · Pick individual students
+            Message a Single Individual
           </label>
           <input
             placeholder="Search by name or roll number…"
@@ -322,22 +318,19 @@ const TeacherMessagesMain = () => {
             </button>
           </div>
 
-          {/* Success banner */}
           {sendSuccess && !showForm && (
             <div style={{ background:G[100], border:`1px solid ${G[300]}`, color:G[700], borderRadius:10, padding:"10px 16px", fontSize:13, fontWeight:600, marginBottom:16, animation:"fadeUp 0.35s ease both" }}>
                {sendSuccess}
             </div>
           )}
 
-          {/* Compose form */}
           {showForm && (
             <div style={{ background:"#fff", borderRadius:18, boxShadow:`0 2px 16px rgba(0,0,0,0.07),0 0 0 1px ${G[100]}`, padding:"28px", marginBottom:20, animation:"fadeUp 0.38s ease both" }}>
               <Heading label="New Message" />
 
-              {/* Mode toggle */}
               <ModeToggle mode={mode} onChange={m => { setMode(m); setSelectedSections([]); setSelectedStudents([]) }} />
 
-              {/* Section mode */}
+
               {mode === "sections" && (
                 <SectionPicker
                   sections={sections}
