@@ -39,54 +39,17 @@ const ModeToggle = ({ mode, onChange }) => (
 )
 
 // ── Section checkbox list ─────────────────────────────────────────────────────
-const SectionPicker = ({ sections, selected, onChange }) => (
-  <div style={{ marginBottom:14 }}>
-    <label style={{ display:"block", fontSize:10, fontWeight:700, color:G[600], textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:8 }}>
-      Select Sections (multiple allowed)
-    </label>
-    <div style={{ display:"flex", flexDirection:"column", gap:6, maxHeight:180, overflowY:"auto", paddingRight:2 }}>
-      {sections.map(s => {
-        const checked = selected.includes(s.id)
-        return (
-          <label key={s.id}
-            style={{
-              display:"flex", alignItems:"center", gap:10,
-              padding:"9px 12px", borderRadius:10, cursor:"pointer",
-              border:`1.5px solid ${checked ? G[400] : G[200]}`,
-              background: checked ? G[50] : "#fff",
-              transition:"all 0.14s",
-            }}>
-            <div style={{
-              width:17, height:17, borderRadius:5, flexShrink:0,
-              border:`2px solid ${checked ? G[600] : G[300]}`,
-              background: checked ? G[600] : "transparent",
-              display:"flex", alignItems:"center", justifyContent:"center",
-              transition:"all 0.12s",
-            }}>
-              {checked && <span style={{ color:"#fff", fontSize:10, fontWeight:900, lineHeight:1 }}>✓</span>}
-            </div>
-            <input type="checkbox" checked={checked} onChange={() => {
-              onChange(checked ? selected.filter(id => id !== s.id) : [...selected, s.id])
-            }} style={{ display:"none" }} />
-            <span style={{ fontSize:13, fontWeight:600, color:G[800] }}>{s.branch?.name} — {s.name}</span>
-          </label>
-        )
-      })}
-    </div>
-  </div>
-)
-
-// ── Student picker (loads per selected sections) ──────────────────────────────
-const StudentPicker = ({ sections, selectedSections, selectedStudents, onChange }) => {
+const StudentPicker = ({ sections, selectedSections, selectedStudents, onChange, onSectionsChange }) => {
   const [studentsBySec, setStudentsBySec] = useState({})
   const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState("")
 
   const fetchStudents = useCallback(async (sectionIds) => {
+    const newIds = sectionIds.filter(sid => !studentsBySec[sid])
+    if (newIds.length === 0) return
     setLoading(true)
     const results = {}
-    await Promise.all(sectionIds.map(async sid => {
-      if (studentsBySec[sid]) { results[sid] = studentsBySec[sid]; return }
+    await Promise.all(newIds.map(async sid => {
       try {
         const r = await api.get(`/api/messages/sections/${sid}/students/`)
         results[sid] = r.data
@@ -98,10 +61,10 @@ const StudentPicker = ({ sections, selectedSections, selectedStudents, onChange 
 
   useEffect(() => {
     if (selectedSections.length > 0) fetchStudents(selectedSections)
-  }, [selectedSections])
+  }, [selectedSections])  // triggers when parent updates selectedSections
 
   const allStudents = selectedSections.flatMap(sid => studentsBySec[sid] || [])
-  const filtered    = allStudents.filter(s =>
+  const filtered = allStudents.filter(s =>
     s.full_name.toLowerCase().includes(search.toLowerCase()) ||
     s.roll_number?.toLowerCase().includes(search.toLowerCase())
   )
@@ -113,68 +76,65 @@ const StudentPicker = ({ sections, selectedSections, selectedStudents, onChange 
     else onChange([...new Set([...selectedStudents, ...allIds])])
   }
 
+  const handleSectionChange = (newSids) => {
+    // Remove students that no longer belong to selected sections
+    const stillValid = newSids.flatMap(sid => (studentsBySec[sid] || []).map(s => s.id))
+    onChange(selectedStudents.filter(id => stillValid.includes(id)))
+    onSectionsChange(newSids)  // ← update parent's selectedSections
+  }
+
   return (
-    <div style={{ marginBottom:14 }}>
-      <label style={{ display:"block", fontSize:10, fontWeight:700, color:G[600], textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:8 }}>
+    <div style={{ marginBottom: 14 }}>
+      <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: G[600], textTransform: "uppercase", letterSpacing: "1.2px", marginBottom: 8 }}>
         1 · Pick section(s) to load students from
       </label>
-      <SectionPicker sections={sections} selected={selectedSections} onChange={sids => {
-        const remaining = Object.entries(studentsBySec)
-          .filter(([sid]) => sids.includes(parseInt(sid)))
-          .flatMap(([, studs]) => studs.map(s => s.id))
-        onChange(selectedStudents.filter(id => remaining.includes(id)))
-      }} />
+
+      {/* Now correctly calls handleSectionChange which updates parent */}
+      <SectionPicker
+        sections={sections}
+        selected={selectedSections}
+        onChange={handleSectionChange}
+      />
 
       {selectedSections.length > 0 && (
         <>
-          <label style={{ display:"block", fontSize:10, fontWeight:700, color:G[600], textTransform:"uppercase", letterSpacing:"1.2px", margin:"14px 0 8px" }}>
-            Message a Single Individual
+          <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: G[600], textTransform: "uppercase", letterSpacing: "1.2px", margin: "14px 0 8px" }}>
+            2 · Select students
           </label>
           <input
             placeholder="Search by name or roll number…"
-            value={search} onChange={e => setSearch(e.target.value)}
-            style={{ display:"block", width:"100%", boxSizing:"border-box", padding:"9px 12px", marginBottom:8, borderRadius:9, border:`1.5px solid ${G[200]}`, fontSize:13, color:G[900], fontFamily:"'DM Sans',sans-serif", background:G[50] }}
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{ display: "block", width: "100%", boxSizing: "border-box", padding: "9px 12px", marginBottom: 8, borderRadius: 9, border: `1.5px solid ${G[200]}`, fontSize: 13, color: G[900], fontFamily: "'DM Sans',sans-serif", background: G[50] }}
           />
           {loading ? (
-            <p style={{ fontSize:12, color:"#9ca3af", padding:"8px 0" }}>Loading students…</p>
+            <p style={{ fontSize: 12, color: "#9ca3af", padding: "8px 0" }}>Loading students…</p>
           ) : filtered.length === 0 ? (
-            <p style={{ fontSize:12, color:"#9ca3af", padding:"8px 0" }}>No students found.</p>
+            <p style={{ fontSize: 12, color: "#9ca3af", padding: "8px 0" }}>No students found.</p>
           ) : (
             <>
-              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6 }}>
-                <span style={{ fontSize:11, color:"#9ca3af" }}>{selectedStudents.length} selected</span>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                <span style={{ fontSize: 11, color: "#9ca3af" }}>{selectedStudents.length} selected</span>
                 <button onClick={toggleAll}
-                  style={{ background:"none", border:"none", color:G[700], fontSize:12, fontWeight:700, cursor:"pointer", textDecoration:"underline", padding:0, fontFamily:"'DM Sans',sans-serif" }}>
+                  style={{ background: "none", border: "none", color: G[700], fontSize: 12, fontWeight: 700, cursor: "pointer", textDecoration: "underline", padding: 0, fontFamily: "'DM Sans',sans-serif" }}>
                   {filtered.every(s => selectedStudents.includes(s.id)) ? "Deselect All" : "Select All"}
                 </button>
               </div>
-              <div style={{ display:"flex", flexDirection:"column", gap:5, maxHeight:220, overflowY:"auto", paddingRight:2 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 5, maxHeight: 220, overflowY: "auto", paddingRight: 2 }}>
                 {filtered.map(s => {
                   const checked = selectedStudents.includes(s.id)
                   return (
                     <label key={s.id}
-                      style={{
-                        display:"flex", alignItems:"center", gap:10,
-                        padding:"8px 12px", borderRadius:9, cursor:"pointer",
-                        border:`1.5px solid ${checked ? G[400] : G[100]}`,
-                        background: checked ? G[50] : "#fff",
-                        transition:"all 0.12s",
-                      }}>
-                      <div style={{
-                        width:16, height:16, borderRadius:4, flexShrink:0,
-                        border:`2px solid ${checked ? G[600] : G[300]}`,
-                        background: checked ? G[600] : "transparent",
-                        display:"flex", alignItems:"center", justifyContent:"center",
-                        transition:"all 0.12s",
-                      }}>
-                        {checked && <span style={{ color:"#fff", fontSize:9, fontWeight:900, lineHeight:1 }}>✓</span>}
+                      style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 9, cursor: "pointer", border: `1.5px solid ${checked ? G[400] : G[100]}`, background: checked ? G[50] : "#fff", transition: "all 0.12s" }}>
+                      <div style={{ width: 16, height: 16, borderRadius: 4, flexShrink: 0, border: `2px solid ${checked ? G[600] : G[300]}`, background: checked ? G[600] : "transparent", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.12s" }}>
+                        {checked && <span style={{ color: "#fff", fontSize: 9, fontWeight: 900, lineHeight: 1 }}>✓</span>}
                       </div>
                       <input type="checkbox" checked={checked} onChange={() =>
                         onChange(checked ? selectedStudents.filter(id => id !== s.id) : [...selectedStudents, s.id])
-                      } style={{ display:"none" }} />
+                      } style={{ display: "none" }} />
                       <div>
-                        <p style={{ margin:0, fontSize:12, fontWeight:700, color:G[800] }}>{s.full_name}</p>
-                        <p style={{ margin:0, fontSize:10, color:"#9ca3af" }}>{s.roll_number}</p>
+                        <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: G[800] }}>{s.full_name}</p>
+                        <p style={{ margin: 0, fontSize: 10, color: "#9ca3af" }}>{s.roll_number}</p>
                       </div>
                     </label>
                   )
