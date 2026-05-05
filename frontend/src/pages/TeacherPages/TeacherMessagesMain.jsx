@@ -20,7 +20,6 @@ const ErrBox = ({ msg }) => msg ? (
   <div style={{ background:"#fef2f2", border:"1.5px solid #fecaca", color:"#dc2626", borderRadius:10, padding:"10px 14px", marginBottom:12, fontSize:13, fontFamily:"'DM Sans',sans-serif" }}>{msg}</div>
 ) : null
 
-// ── Mode toggle pill ──────────────────────────────────────────────────────────
 const ModeToggle = ({ mode, onChange }) => (
   <div style={{ display:"flex", background:G[50], border:`1.5px solid ${G[200]}`, borderRadius:12, padding:4, gap:4, marginBottom:20 }}>
     {[
@@ -38,7 +37,45 @@ const ModeToggle = ({ mode, onChange }) => (
   </div>
 )
 
-// ── Section checkbox list ─────────────────────────────────────────────────────
+// ── THIS WAS MISSING in your updated file ─────────────────────────────────────
+const SectionPicker = ({ sections, selected, onChange }) => (
+  <div style={{ marginBottom:14 }}>
+    <label style={{ display:"block", fontSize:10, fontWeight:700, color:G[600], textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:8 }}>
+      Select Sections (multiple allowed)
+    </label>
+    <div style={{ display:"flex", flexDirection:"column", gap:6, maxHeight:180, overflowY:"auto", paddingRight:2 }}>
+      {sections.map(s => {
+        const checked = selected.includes(s.id)
+        return (
+          <label key={s.id}
+            style={{
+              display:"flex", alignItems:"center", gap:10,
+              padding:"9px 12px", borderRadius:10, cursor:"pointer",
+              border:`1.5px solid ${checked ? G[400] : G[200]}`,
+              background: checked ? G[50] : "#fff",
+              transition:"all 0.14s",
+            }}>
+            <div style={{
+              width:17, height:17, borderRadius:5, flexShrink:0,
+              border:`2px solid ${checked ? G[600] : G[300]}`,
+              background: checked ? G[600] : "transparent",
+              display:"flex", alignItems:"center", justifyContent:"center",
+              transition:"all 0.12s",
+            }}>
+              {checked && <span style={{ color:"#fff", fontSize:10, fontWeight:900, lineHeight:1 }}>✓</span>}
+            </div>
+            <input type="checkbox" checked={checked} onChange={() => {
+              onChange(checked ? selected.filter(id => id !== s.id) : [...selected, s.id])
+            }} style={{ display:"none" }} />
+            <span style={{ fontSize:13, fontWeight:600, color:G[800] }}>{s.branch?.name} — {s.name}</span>
+          </label>
+        )
+      })}
+    </div>
+  </div>
+)
+
+// ── Student picker ────────────────────────────────────────────────────────────
 const StudentPicker = ({ sections, selectedSections, selectedStudents, onChange, onSectionsChange }) => {
   const [studentsBySec, setStudentsBySec] = useState({})
   const [loading, setLoading] = useState(false)
@@ -61,7 +98,7 @@ const StudentPicker = ({ sections, selectedSections, selectedStudents, onChange,
 
   useEffect(() => {
     if (selectedSections.length > 0) fetchStudents(selectedSections)
-  }, [selectedSections])  // triggers when parent updates selectedSections
+  }, [selectedSections])
 
   const allStudents = selectedSections.flatMap(sid => studentsBySec[sid] || [])
   const filtered = allStudents.filter(s =>
@@ -77,19 +114,17 @@ const StudentPicker = ({ sections, selectedSections, selectedStudents, onChange,
   }
 
   const handleSectionChange = (newSids) => {
-    // Remove students that no longer belong to selected sections
     const stillValid = newSids.flatMap(sid => (studentsBySec[sid] || []).map(s => s.id))
     onChange(selectedStudents.filter(id => stillValid.includes(id)))
-    onSectionsChange(newSids)  // ← update parent's selectedSections
+    onSectionsChange(newSids)
   }
 
   return (
-    <div style={{ marginBottom: 14 }}>
-      <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: G[600], textTransform: "uppercase", letterSpacing: "1.2px", marginBottom: 8 }}>
+    <div style={{ marginBottom:14 }}>
+      <label style={{ display:"block", fontSize:10, fontWeight:700, color:G[600], textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:8 }}>
         1 · Pick section(s) to load students from
       </label>
 
-      {/* Now correctly calls handleSectionChange which updates parent */}
       <SectionPicker
         sections={sections}
         selected={selectedSections}
@@ -98,43 +133,43 @@ const StudentPicker = ({ sections, selectedSections, selectedStudents, onChange,
 
       {selectedSections.length > 0 && (
         <>
-          <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: G[600], textTransform: "uppercase", letterSpacing: "1.2px", margin: "14px 0 8px" }}>
+          <label style={{ display:"block", fontSize:10, fontWeight:700, color:G[600], textTransform:"uppercase", letterSpacing:"1.2px", margin:"14px 0 8px" }}>
             2 · Select students
           </label>
           <input
             placeholder="Search by name or roll number…"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            style={{ display: "block", width: "100%", boxSizing: "border-box", padding: "9px 12px", marginBottom: 8, borderRadius: 9, border: `1.5px solid ${G[200]}`, fontSize: 13, color: G[900], fontFamily: "'DM Sans',sans-serif", background: G[50] }}
+            style={{ display:"block", width:"100%", boxSizing:"border-box", padding:"9px 12px", marginBottom:8, borderRadius:9, border:`1.5px solid ${G[200]}`, fontSize:13, color:G[900], fontFamily:"'DM Sans',sans-serif", background:G[50] }}
           />
           {loading ? (
-            <p style={{ fontSize: 12, color: "#9ca3af", padding: "8px 0" }}>Loading students…</p>
+            <p style={{ fontSize:12, color:"#9ca3af", padding:"8px 0" }}>Loading students…</p>
           ) : filtered.length === 0 ? (
-            <p style={{ fontSize: 12, color: "#9ca3af", padding: "8px 0" }}>No students found.</p>
+            <p style={{ fontSize:12, color:"#9ca3af", padding:"8px 0" }}>No students found.</p>
           ) : (
             <>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                <span style={{ fontSize: 11, color: "#9ca3af" }}>{selectedStudents.length} selected</span>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6 }}>
+                <span style={{ fontSize:11, color:"#9ca3af" }}>{selectedStudents.length} selected</span>
                 <button onClick={toggleAll}
-                  style={{ background: "none", border: "none", color: G[700], fontSize: 12, fontWeight: 700, cursor: "pointer", textDecoration: "underline", padding: 0, fontFamily: "'DM Sans',sans-serif" }}>
+                  style={{ background:"none", border:"none", color:G[700], fontSize:12, fontWeight:700, cursor:"pointer", textDecoration:"underline", padding:0, fontFamily:"'DM Sans',sans-serif" }}>
                   {filtered.every(s => selectedStudents.includes(s.id)) ? "Deselect All" : "Select All"}
                 </button>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 5, maxHeight: 220, overflowY: "auto", paddingRight: 2 }}>
+              <div style={{ display:"flex", flexDirection:"column", gap:5, maxHeight:220, overflowY:"auto", paddingRight:2 }}>
                 {filtered.map(s => {
                   const checked = selectedStudents.includes(s.id)
                   return (
                     <label key={s.id}
-                      style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 9, cursor: "pointer", border: `1.5px solid ${checked ? G[400] : G[100]}`, background: checked ? G[50] : "#fff", transition: "all 0.12s" }}>
-                      <div style={{ width: 16, height: 16, borderRadius: 4, flexShrink: 0, border: `2px solid ${checked ? G[600] : G[300]}`, background: checked ? G[600] : "transparent", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.12s" }}>
-                        {checked && <span style={{ color: "#fff", fontSize: 9, fontWeight: 900, lineHeight: 1 }}>✓</span>}
+                      style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 12px", borderRadius:9, cursor:"pointer", border:`1.5px solid ${checked ? G[400] : G[100]}`, background: checked ? G[50] : "#fff", transition:"all 0.12s" }}>
+                      <div style={{ width:16, height:16, borderRadius:4, flexShrink:0, border:`2px solid ${checked ? G[600] : G[300]}`, background: checked ? G[600] : "transparent", display:"flex", alignItems:"center", justifyContent:"center", transition:"all 0.12s" }}>
+                        {checked && <span style={{ color:"#fff", fontSize:9, fontWeight:900, lineHeight:1 }}>✓</span>}
                       </div>
                       <input type="checkbox" checked={checked} onChange={() =>
                         onChange(checked ? selectedStudents.filter(id => id !== s.id) : [...selectedStudents, s.id])
-                      } style={{ display: "none" }} />
+                      } style={{ display:"none" }} />
                       <div>
-                        <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: G[800] }}>{s.full_name}</p>
-                        <p style={{ margin: 0, fontSize: 10, color: "#9ca3af" }}>{s.roll_number}</p>
+                        <p style={{ margin:0, fontSize:12, fontWeight:700, color:G[800] }}>{s.full_name}</p>
+                        <p style={{ margin:0, fontSize:10, color:"#9ca3af" }}>{s.roll_number}</p>
                       </div>
                     </label>
                   )
@@ -155,8 +190,7 @@ const TeacherMessagesMain = () => {
   const [showForm,     setShowForm]     = useState(false)
   const [sections,     setSections]     = useState([])
 
-  // compose form state
-  const [mode,             setMode]             = useState("sections") // "sections" | "students"
+  const [mode,             setMode]             = useState("sections")
   const [selectedSections, setSelectedSections] = useState([])
   const [selectedStudents, setSelectedStudents] = useState([])
   const [title,            setTitle]            = useState("")
@@ -193,13 +227,8 @@ const TeacherMessagesMain = () => {
   const handleSend = async () => {
     setSendError("")
     if (!title.trim() || !message.trim()) { setSendError("Title and message are required"); return }
-
-    if (mode === "sections" && selectedSections.length === 0) {
-      setSendError("Select at least one section"); return
-    }
-    if (mode === "students" && selectedStudents.length === 0) {
-      setSendError("Select at least one student"); return
-    }
+    if (mode === "sections" && selectedSections.length === 0) { setSendError("Select at least one section"); return }
+    if (mode === "students" && selectedStudents.length === 0) { setSendError("Select at least one student"); return }
 
     const payload = {
       title:           title.trim(),
@@ -237,7 +266,6 @@ const TeacherMessagesMain = () => {
       <div style={{ minHeight:"100vh", background:G[50], fontFamily:"'DM Sans',sans-serif" }}>
         <TeacherNav />
 
-        {/* Header */}
         <div style={{
           position:"relative",
           background:`linear-gradient(135deg,${G[900]} 0%,${G[700]} 50%,${G[500]} 100%)`,
@@ -259,7 +287,6 @@ const TeacherMessagesMain = () => {
 
         <div style={{ maxWidth:700, margin:"0 auto", padding:"32px 24px 56px" }}>
 
-          {/* Toolbar */}
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20, animation:"fadeUp 0.5s ease both" }}>
             <div style={{ display:"flex", alignItems:"center", gap:10 }}>
               <div style={{ width:3, height:22, borderRadius:2, background:`linear-gradient(to bottom,${G[500]},${G[300]})`, flexShrink:0 }}/>
@@ -287,9 +314,7 @@ const TeacherMessagesMain = () => {
           {showForm && (
             <div style={{ background:"#fff", borderRadius:18, boxShadow:`0 2px 16px rgba(0,0,0,0.07),0 0 0 1px ${G[100]}`, padding:"28px", marginBottom:20, animation:"fadeUp 0.38s ease both" }}>
               <Heading label="New Message" />
-
               <ModeToggle mode={mode} onChange={m => { setMode(m); setSelectedSections([]); setSelectedStudents([]) }} />
-
 
               {mode === "sections" && (
                 <SectionPicker
@@ -299,21 +324,16 @@ const TeacherMessagesMain = () => {
                 />
               )}
 
-              {/* Student mode */}
               {mode === "students" && (
                 <StudentPicker
                   sections={sections}
                   selectedSections={selectedSections}
                   selectedStudents={selectedStudents}
                   onChange={setSelectedStudents}
-                  // pass section setter so student picker can update parent
-                  onSectionsChange={sids => {
-                    setSelectedSections(sids)
-                  }}
+                  onSectionsChange={setSelectedSections}
                 />
               )}
 
-              {/* Title */}
               <input
                 type="text" placeholder="Title" value={title}
                 onChange={e => setTitle(e.target.value)}
@@ -321,7 +341,6 @@ const TeacherMessagesMain = () => {
                 style={{ display:"block", width:"100%", boxSizing:"border-box", padding:"10px 14px", marginBottom:12, borderRadius:10, border:`1.5px solid ${G[200]}`, fontSize:13, color:G[900], fontFamily:"'DM Sans',sans-serif", background:G[50] }}
               />
 
-              {/* Message */}
               <textarea
                 placeholder="Message" value={message} rows={4}
                 onChange={e => setMessage(e.target.value)}
@@ -329,7 +348,6 @@ const TeacherMessagesMain = () => {
                 style={{ display:"block", width:"100%", boxSizing:"border-box", padding:"10px 14px", marginBottom:12, borderRadius:10, border:`1.5px solid ${G[200]}`, fontSize:13, color:G[900], fontFamily:"'DM Sans',sans-serif", background:G[50], resize:"none" }}
               />
 
-              {/* Summary pill */}
               {(selectedSections.length > 0 || selectedStudents.length > 0) && (
                 <div style={{ background:G[50], border:`1.5px solid ${G[200]}`, borderRadius:10, padding:"8px 14px", marginBottom:12, fontSize:12, color:G[700], fontWeight:600 }}>
                   {mode === "sections"
@@ -348,7 +366,6 @@ const TeacherMessagesMain = () => {
             </div>
           )}
 
-          {/* Inbox */}
           <div style={{ background:"#fff", borderRadius:18, boxShadow:`0 2px 16px rgba(0,0,0,0.07),0 0 0 1px ${G[100]}`, padding:"28px", animation:"fadeUp 0.44s ease both", animationDelay:"0.08s" }}>
             <Heading label="Inbox" />
             <div style={{ display:"flex", flexDirection:"column", gap:0, maxHeight:520, overflowY:"auto" }}>
