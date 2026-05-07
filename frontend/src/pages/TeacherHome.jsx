@@ -22,6 +22,10 @@ const TeacherHome = () => {
   const [statsData, setStatsData]         = useState({ sections:[], students:[] })
   const [statsLoading, setStatsLoading]   = useState(true)
   const [activeSection, setActiveSection] = useState(null)
+  const [sectionTasks, setSectionTasks]       = useState([])
+  const [taskPrompts, setTaskPrompts]         = useState({})   
+  const [savingPrompt, setSavingPrompt]       = useState({})   
+  const [savedPrompt, setSavedPrompt]         = useState({}) 
 
   useEffect(() => {
     api.get("/api/assignments/")
@@ -41,6 +45,17 @@ const TeacherHome = () => {
       .finally(() => setStatsLoading(false))
   }, [activeSection])
 
+  useEffect(() => {
+  api.get("/api/task/section-task/active/")
+    .then(res => {
+      setSectionTasks(res.data)
+      const initial = {}
+      res.data.forEach(t => { initial[t.assignment_id] = t.prompt_input })
+      setTaskPrompts(initial)
+    })
+    .catch(err => console.error(err))
+}, [])
+
   const { sections, students } = statsData
 
   const allSubjects = (() => {
@@ -56,6 +71,24 @@ const TeacherHome = () => {
     return "#dc2626"
   }
   const attColor = pct => pct >= 75 ? G[700] : pct >= 60 ? "#d97706" : "#dc2626"
+
+  const savePrompt = async (assignmentId) => {
+  const prompt = (taskPrompts[assignmentId] || "").trim()
+  if (!prompt) return
+  setSavingPrompt(p => ({ ...p, [assignmentId]: true }))
+  setSavedPrompt(p => ({ ...p, [assignmentId]: false }))
+  try {
+    await api.post("/api/task/section-task/", {
+      assignment_id: assignmentId,
+      prompt_input:  prompt,
+    })
+    setSavedPrompt(p => ({ ...p, [assignmentId]: true }))
+    setTimeout(() => setSavedPrompt(p => ({ ...p, [assignmentId]: false })), 2500)
+  } catch (e) {
+    console.error(e)
+  }
+  setSavingPrompt(p => ({ ...p, [assignmentId]: false }))
+}
 
   return (
     <>
@@ -139,6 +172,68 @@ const TeacherHome = () => {
               </div>
             )}
           </div>
+
+          <div style={{ background:"#fff", borderRadius:18, boxShadow:`0 2px 16px rgba(0,0,0,0.07),0 0 0 1px ${G[100]}`, padding:"28px", marginBottom:24, animation:"fadeUp 0.5s ease both", animationDelay:"0.22s" }}>
+  <Heading label="Task Prompts" />
+  <p style={{ margin:"-12px 0 20px", fontSize:13, color:"#9ca3af", lineHeight:1.5 }}>
+    Set a task prompt per subject. Students in that section will get AI tasks based on your instruction.
+  </p>
+  {loading ? (
+    <p style={{ color:"#9ca3af", fontSize:13 }}>Loading…</p>
+  ) : assignments.length === 0 ? (
+    <p style={{ color:"#9ca3af", fontSize:13 }}>No assignments found.</p>
+  ) : (
+    <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+      {assignments.map(a => {
+        const isSaving = savingPrompt[a.id]
+        const isSaved  = savedPrompt[a.id]
+        return (
+          <div key={a.id} style={{ border:`1.5px solid ${G[200]}`, borderRadius:14, padding:"18px 20px", background:G[50] }}>
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
+              <div>
+                <p style={{ margin:"0 0 2px", fontSize:14, fontWeight:700, color:G[800] }}>{a.subject.name}</p>
+                <p style={{ margin:0, fontSize:12, color:"#9ca3af" }}>{a.subject.code} · {a.section.branch.name} · {a.section.name}</p>
+              </div>
+              {isSaved && (
+                <span style={{ background:G[100], color:G[700], borderRadius:999, padding:"4px 14px", fontSize:12, fontWeight:700 }}>
+                  ✓ Saved
+                </span>
+              )}
+            </div>
+            <textarea
+              rows={3}
+              placeholder={`e.g. "Give students 5 tasks on linked lists with increasing difficulty"`}
+              value={taskPrompts[a.id] || ""}
+              onChange={e => setTaskPrompts(p => ({ ...p, [a.id]: e.target.value }))}
+              style={{
+                width:"100%", boxSizing:"border-box",
+                border:`1.5px solid ${G[200]}`, borderRadius:10,
+                padding:"10px 14px", fontSize:13, color:"#374151",
+                fontFamily:"'DM Sans',sans-serif", lineHeight:1.6,
+                resize:"vertical", outline:"none", background:"#fff",
+                transition:"border-color 0.2s",
+              }}
+              onFocus={e => e.target.style.borderColor = G[400]}
+              onBlur={e  => e.target.style.borderColor = G[200]}
+            />
+            <button
+              onClick={() => savePrompt(a.id)}
+              disabled={isSaving || !(taskPrompts[a.id] || "").trim()}
+              style={{
+                marginTop:10, background: isSaving ? G[300] : G[700],
+                color:"#fff", border:"none", borderRadius:10,
+                padding:"10px 22px", fontSize:13, fontWeight:600,
+                cursor: isSaving ? "not-allowed" : "pointer",
+                transition:"background 0.2s",
+              }}>
+              {isSaving ? "Saving…" : "Save Prompt"}
+            </button>
+          </div>
+        )
+      })}
+    </div>
+  )}
+</div>
 
           <div style={{ background:"#fff", borderRadius:18, boxShadow:`0 2px 16px rgba(0,0,0,0.07),0 0 0 1px ${G[100]}`, padding:"28px", animation:"fadeUp 0.5s ease both", animationDelay:"0.26s" }}>
             <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:20 }}>

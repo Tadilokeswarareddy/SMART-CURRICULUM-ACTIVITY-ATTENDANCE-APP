@@ -1,4 +1,3 @@
-// src/pages/admin/pages/Teachers.jsx
 import { useState } from "react"
 import api from "../../../api"
 import {

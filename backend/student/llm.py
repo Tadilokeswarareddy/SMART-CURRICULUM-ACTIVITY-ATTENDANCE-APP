@@ -16,12 +16,43 @@ FALLBACK_TASK_POOLS = [
 ]
 
 
-def generate_task_from_llm():
-    prompt = """
-    Generate 5 coding tasks for a CS student.
-    Return ONLY a JSON array of objects with keys: "title", "description", "duration".
-    The "duration" MUST be a plain number (minutes). No markdown, no backticks.
+def generate_task_from_llm(subject=None, section=None, teacher_prompt=None):
     """
+    subject       : api.Subject instance (optional)
+    section       : api.Section instance (optional)
+    teacher_prompt: str — the teacher's raw instruction (optional)
+    """
+    parts = []
+
+    parts.append(
+        "You are a university task generator. Generate exactly 5 student tasks."
+    )
+
+    if section:
+        parts.append(
+            f"Section context: Branch={section.branch.name}, "
+            f"Year={section.year.year}, Section={section.name}."
+        )
+
+    if subject:
+        parts.append(
+            f"Subject: {subject.name} (code: {subject.code})."
+        )
+
+    if teacher_prompt:
+        parts.append(
+            f"Teacher's instruction for this task set: {teacher_prompt}"
+        )
+    else:
+        parts.append("Generate general tasks appropriate for this subject and level.")
+
+    parts.append(
+        'Return ONLY a JSON array of 5 objects with keys: "title", "description", "duration". '
+        '"duration" must be a plain number (minutes). No markdown, no backticks, no explanation.'
+    )
+
+    prompt = "\n\n".join(parts)
+
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
 
     try:
@@ -34,7 +65,6 @@ def generate_task_from_llm():
 
         res_data = response.json()
         if 'candidates' not in res_data:
-            print("AI ERROR: no candidates in response")
             return random.choice(FALLBACK_TASK_POOLS), True
 
         raw_text = res_data['candidates'][0]['content']['parts'][0]['text']
@@ -44,21 +74,22 @@ def generate_task_from_llm():
 
         final_tasks = []
         for t in tasks[:5]:
-            raw_duration   = str(t.get("duration", "20"))
-            clean_duration = re.search(r'\d+', raw_duration)
-            duration_val   = int(clean_duration.group(0)) if clean_duration else 20
+            raw_dur   = str(t.get("duration", "20"))
+            clean_dur = re.search(r'\d+', raw_dur)
             final_tasks.append({
-                "title":       t.get("title",       "Coding Task"),
+                "title":       t.get("title", "Task"),
                 "description": t.get("description", "Complete the task."),
-                "duration":    duration_val,
+                "duration":    int(clean_dur.group(0)) if clean_dur else 20,
             })
 
-        print(f"AI SUCCESS: {len(final_tasks)} tasks ready.")
+        print(f"AI SUCCESS: {len(final_tasks)} tasks.")
         return final_tasks, False
 
     except Exception as e:
-        print(f"AI SCRUBBER ERROR: {str(e)}")
+        print(f"AI ERROR: {str(e)}")
         return random.choice(FALLBACK_TASK_POOLS), True
+    
+
 
 
 def review_submission_with_gemini(

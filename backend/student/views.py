@@ -4,6 +4,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db.models import Avg
+from .models import SectionTask
+
 
 from .models import StudentModel, SmartTask, TaskSubmission
 from .serializers import (
@@ -84,10 +86,47 @@ class StudentAttendanceView(APIView):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def generate_task(request):
+    subject_id = request.data.get("subject_id")
+
+    if not subject_id:
+        return Response({"error": "subject_id is required"}, status=400)
+
+    from api.models import Subject, TeachingAssignment
+    try:
+        subject = Subject.objects.get(id=subject_id)
+    except Subject.DoesNotExist:
+        return Response({"error": "Subject not found"}, status=404)
+
+    try:
+        student_profile = request.user.student_profile
+        section = student_profile.section
+    except Exception:
+        return Response({"error": "Student profile not found"}, status=404)
+
+    if not section:
+        return Response({"error": "Student has no section assigned"}, status=400)
+
+    section_task = SectionTask.objects.filter(
+        teaching_assignment__subject=subject,
+        teaching_assignment__section=section,
+        is_active=True,
+    ).select_related(
+        'teaching_assignment__subject',
+        'teaching_assignment__section__branch',
+        'teaching_assignment__section__year',
+    ).first()
+
     existing_tasks = SmartTask.objects.filter(
         student=request.user,
+        subject=subject,
         completed=False,
     ).prefetch_related('submission')
+
+    if existing_tasks.exists() and section_task:
+        same_prompt = existing_tasks.filter(section_task=section_task).exists()
+        if not same_prompt:
+            existing_tasks.update(completed=True)  
+            existing_tasks = SmartTask.objects.none()
 
     if existing_tasks.exists():
         return Response([
@@ -96,32 +135,40 @@ def generate_task(request):
                 "title":       task.title,
                 "description": task.description,
                 "duration":    task.duration,
-                "saved_score": task.submission.score
-                               if hasattr(task, 'submission') else None,
+                "subject_id":  task.subject_id,
+                "saved_score": task.submission.score if hasattr(task, 'submission') else None,
                 "is_fallback": False,
             }
             for task in existing_tasks
         ])
 
-    data_list, is_fallback = generate_task_from_llm()
+    data_list, is_fallback = generate_task_from_llm(
+        subject=subject,
+        section=section,
+        teacher_prompt=section_task.prompt_input if section_task else None,
+    )
+
     created_tasks = []
     for item in data_list[:5]:
         task = SmartTask.objects.create(
-            student     = request.user,
-            title       = item["title"],
-            description = item["description"],
-            duration    = item["duration"],
+            student      = request.user,
+            title        = item["title"],
+            description  = item["description"],
+            duration     = item["duration"],
+            subject      = subject,
+            section_task = section_task,
         )
         created_tasks.append({
             "id":          task.id,
             "title":       task.title,
             "description": task.description,
             "duration":    task.duration,
+            "subject_id":  task.subject_id,
             "saved_score": None,
             "is_fallback": is_fallback,
         })
-    return Response(created_tasks)
 
+    return Response(created_tasks)
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
@@ -288,3 +335,97 @@ def teacher_student_stats(request):
         })
 
     return Response({"sections": sections, "students": result})
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def upsert_section_task(request):
+    """Teacher creates or updates the active task prompt for their subject+section."""
+    if request.user.role != 'teacher':
+        return Response({"error": "Forbidden"}, status=403)
+
+    assignment_id = request.data.get("assignment_id")
+    prompt_input  = request.data.get("prompt_input", "").strip()
+
+    if not assignment_id or not prompt_input:
+        return Response({"error": "assignment_id and prompt_input are required"}, status=400)
+
+    from api.models import TeachingAssignment
+    try:
+        assignment = TeachingAssignment.objects.get(
+            id=assignment_id,
+            teacher=request.user.teacher_profile
+        )
+    except TeachingAssignment.DoesNotExist:
+        return Response({"error": "Assignment not found or not yours"}, status=404)
+
+    SectionTask.objects.filter(
+        teaching_assignment=assignment,
+        is_active=True
+    ).update(is_active=False)
+
+    section_task = SectionTask.objects.create(
+        teaching_assignment=assignment,
+        prompt_input=prompt_input,
+        is_active=True,
+    )
+
+    return Response({
+        "id":            section_task.id,
+        "assignment_id": assignment.id,
+        "subject":       assignment.subject.name,
+        "section":       str(assignment.section),
+        "prompt_input":  section_task.prompt_input,
+        "created_at":    section_task.created_at,
+    }, status=201)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_active_section_tasks(request):
+    """
+    Teacher: get all their active prompts.
+    Student: get active prompts for their section's subjects.
+    """
+    from api.models import TeachingAssignment
+
+    if request.user.role == 'teacher':
+        tasks = SectionTask.objects.filter(
+            teaching_assignment__teacher=request.user.teacher_profile,
+            is_active=True,
+        ).select_related('teaching_assignment__subject', 'teaching_assignment__section')
+
+        return Response([
+            {
+                "id":            t.id,
+                "assignment_id": t.teaching_assignment.id,
+                "subject":       t.teaching_assignment.subject.name,
+                "subject_code":  t.teaching_assignment.subject.code,
+                "section":       str(t.teaching_assignment.section),
+                "prompt_input":  t.prompt_input,
+                "updated_at":    t.updated_at,
+            }
+            for t in tasks
+        ])
+
+    elif request.user.role == 'student':
+        try:
+            section = request.user.student_profile.section
+        except Exception:
+            return Response({"error": "Student profile not found"}, status=404)
+
+        tasks = SectionTask.objects.filter(
+            teaching_assignment__section=section,
+            is_active=True,
+        ).select_related('teaching_assignment__subject')
+
+        return Response([
+            {
+                "id":           t.id,
+                "subject":      t.teaching_assignment.subject.name,
+                "subject_code": t.teaching_assignment.subject.code,
+                "subject_id":   t.teaching_assignment.subject.id,
+            }
+            for t in tasks
+        ])
+
+    return Response({"error": "Forbidden"}, status=403)

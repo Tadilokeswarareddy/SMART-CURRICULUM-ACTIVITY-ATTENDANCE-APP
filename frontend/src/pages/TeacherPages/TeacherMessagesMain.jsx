@@ -23,8 +23,8 @@ const ErrBox = ({ msg }) => msg ? (
 const ModeToggle = ({ mode, onChange }) => (
   <div style={{ display:"flex", background:G[50], border:`1.5px solid ${G[200]}`, borderRadius:12, padding:4, gap:4, marginBottom:20 }}>
     {[
-      { key:"sections", label:"📢 Sections" },
-      { key:"students", label:"👤 Students" },
+      { key:"sections", label:"Sections" },
+      { key:"students", label:"Students" },
     ].map(({ key, label }) => (
       <button key={key} onClick={() => onChange(key)}
         style={{
@@ -37,7 +37,6 @@ const ModeToggle = ({ mode, onChange }) => (
   </div>
 )
 
-// ── THIS WAS MISSING in your updated file ─────────────────────────────────────
 const SectionPicker = ({ sections, selected, onChange }) => (
   <div style={{ marginBottom:14 }}>
     <label style={{ display:"block", fontSize:10, fontWeight:700, color:G[600], textTransform:"uppercase", letterSpacing:"1.2px", marginBottom:8 }}>
@@ -75,7 +74,6 @@ const SectionPicker = ({ sections, selected, onChange }) => (
   </div>
 )
 
-// ── Student picker ────────────────────────────────────────────────────────────
 const StudentPicker = ({ sections, selectedSections, selectedStudents, onChange, onSectionsChange }) => {
   const [studentsBySec, setStudentsBySec] = useState({})
   const [loading, setLoading] = useState(false)
@@ -183,7 +181,6 @@ const StudentPicker = ({ sections, selectedSections, selectedStudents, onChange,
   )
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
 const TeacherMessagesMain = () => {
   const [messages,     setMessages]     = useState([])
   const [loading,      setLoading]      = useState(true)
@@ -351,8 +348,8 @@ const TeacherMessagesMain = () => {
               {(selectedSections.length > 0 || selectedStudents.length > 0) && (
                 <div style={{ background:G[50], border:`1.5px solid ${G[200]}`, borderRadius:10, padding:"8px 14px", marginBottom:12, fontSize:12, color:G[700], fontWeight:600 }}>
                   {mode === "sections"
-                    ? `📢 Sending to ${selectedSections.length} section${selectedSections.length !== 1 ? "s" : ""}`
-                    : `👤 Sending to ${selectedStudents.length} student${selectedStudents.length !== 1 ? "s" : ""}`
+                    ? `Sending to ${selectedSections.length} section${selectedSections.length !== 1 ? "s" : ""}`
+                    : `Sending to ${selectedStudents.length} student${selectedStudents.length !== 1 ? "s" : ""}`
                   }
                 </div>
               )}

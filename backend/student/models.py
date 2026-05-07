@@ -17,7 +17,6 @@ class StudentModel(models.Model):
         null=True,
         blank=True
     )
-
     profile_picture = models.ImageField(
         upload_to='student_pics/',
         null=True,
@@ -26,6 +25,30 @@ class StudentModel(models.Model):
 
     def __str__(self):
         return f"{self.roll_number} - {self.user.get_full_name() or self.user.username}"
+
+
+class SectionTask(models.Model):
+    teaching_assignment = models.ForeignKey(
+        'api.TeachingAssignment',
+        on_delete=models.CASCADE,
+        related_name='section_tasks'
+    )
+    prompt_input = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['teaching_assignment'],
+                condition=models.Q(is_active=True),
+                name='unique_active_section_task'
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.teaching_assignment} — active:{self.is_active}"
 
 
 class SmartTask(models.Model):
@@ -38,13 +61,33 @@ class SmartTask(models.Model):
     duration = models.IntegerField()
     completed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    subject = models.ForeignKey(
+        'api.Subject',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+    section_task = models.ForeignKey(
+        SectionTask,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
 
     def __str__(self):
         return self.title
-    
+
+
 class TaskSubmission(models.Model):
-    task = models.OneToOneField(SmartTask, on_delete=models.CASCADE, related_name='submission')
-    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    task = models.OneToOneField(
+        SmartTask,
+        on_delete=models.CASCADE,
+        related_name='submission'
+    )
+    student = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE
+    )
     file = models.FileField(upload_to='task_submissions/')
     score = models.FloatField(null=True, blank=True)
     submitted_at = models.DateTimeField(auto_now_add=True)

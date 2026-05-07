@@ -1,4 +1,3 @@
-// src/pages/admin/pages/Assignments.jsx
 import { useState } from "react"
 import api from "../../../api"
 import {
@@ -28,9 +27,9 @@ const Assignments = ({ data, reload, toast }) => {
     }
     try {
       const payload = {
-        teacher_id: form.teacher_id,   // ← was 'teacher'
-        subject_id: form.subject_id,   // ← was 'subject'
-        section_id: form.section_id    // ← was 'section'
+        teacher_id: form.teacher_id,   
+        subject_id: form.subject_id,   
+        section_id: form.section_id    
       }
       modal === "edit"
         ? await api.patch(`/api/assignments/${form.id}/`, payload)
