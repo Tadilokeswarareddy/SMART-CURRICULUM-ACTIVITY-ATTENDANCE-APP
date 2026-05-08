@@ -64,7 +64,7 @@ const Scanqr = () => {
             <h2 style={{ margin:0, fontSize:18, fontWeight:700, color:G[800], fontFamily:"'DM Serif Display',serif" }}>Scan Attendance QR</h2>
           </div>
 
-          {/* Scanner box */}
+   
           <div style={{ position:"relative", display:"inline-block", marginBottom:20 }}>
             <div id="qr-reader" style={{ width:260, height:200, background:"#111", borderRadius:14, overflow:"hidden",
               boxShadow: isRunning ? `0 0 0 3px ${G[400]},0 4px 20px rgba(0,0,0,0.3)` : `0 4px 20px rgba(0,0,0,0.15)`,
@@ -77,7 +77,7 @@ const Scanqr = () => {
             )}
           </div>
 
-          {/* Status */}
+
           {statusMessage && (
             <div style={{ padding:"10px 16px", borderRadius:10, marginBottom:20, fontSize:13, fontWeight:600, fontFamily:"'DM Sans',sans-serif",
               background: statusType==="success" ? G[50] : "#fef2f2",
@@ -88,7 +88,7 @@ const Scanqr = () => {
             </div>
           )}
 
-          {/* Buttons */}
+  
           <div style={{ display:"flex", gap:12, justifyContent:"center" }}>
             <button onClick={startCamera} disabled={isRunning}
               style={{ background:G[700], color:"#fff", border:"none", borderRadius:10, padding:"10px 22px", fontSize:14, fontWeight:600, fontFamily:"'DM Sans',sans-serif", cursor:"pointer", opacity:isRunning?0.5:1, transition:"opacity 0.2s" }}>

@@ -62,7 +62,7 @@ const StudentProfile = () => {
 
       <div style={s.page}>
 
-        {/* ── Banner ── */}
+
         <div style={s.banner}>
           <div style={s.c1} /><div style={s.c2} /><div style={s.c3} />
 
@@ -87,7 +87,7 @@ const StudentProfile = () => {
           </svg>
         </div>
 
-        {/* ── Card ── */}
+
         <div style={s.body}>
           <div style={{ ...s.card, animation: "fadeUp 0.5s ease both", animationDelay: "0.2s" }}>
             <Heading label="Student Details" />

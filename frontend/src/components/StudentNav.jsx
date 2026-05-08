@@ -32,12 +32,12 @@ const StudentNav = () => {
       <header style={{ width:"100%", background:"#fff", borderBottom:`1px solid ${G[100]}`, fontFamily:"'DM Sans',sans-serif", position:"sticky", top:0, zIndex:100, boxShadow:"0 1px 8px rgba(21,128,61,0.07)" }}>
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 24px", height:64, maxWidth:1200, margin:"0 auto" }}>
 
-          {/* Logo */}
+
           <Link to="/studenthome" style={{ textDecoration:"none" }}>
             <span style={{ fontSize:22, fontWeight:700, color:G[700], fontFamily:"'DM Serif Display',serif", letterSpacing:"-0.5px" }}>Shusseki</span>
           </Link>
 
-          {/* Desktop nav */}
+
           <nav style={{ display:"flex", alignItems:"center", gap:0, background:G[50], border:`1.5px solid ${G[100]}`, borderRadius:999, padding:"0 8px", height:44 }}
             className="hidden-mobile">
             {NAV_LINKS.map(({ to, label }) => {
@@ -51,20 +51,20 @@ const StudentNav = () => {
             })}
           </nav>
 
-          {/* Desktop logout */}
+
           <Link to="/logout" style={{ display:"block", background:"#dc2626", color:"#fff", borderRadius:10, padding:"8px 18px", fontSize:13, fontWeight:600, fontFamily:"'DM Sans',sans-serif", textDecoration:"none" }}
             className="hidden-mobile">
             Logout
           </Link>
 
-          {/* Mobile hamburger */}
+
           <button onClick={() => setOpen(!open)} className="sn-hamburger show-mobile"
             style={{ background:"none", border:`1.5px solid ${G[200]}`, borderRadius:9, padding:"6px 10px", color:G[700], fontSize:18, cursor:"pointer", lineHeight:1, transition:"background 0.2s" }}>
             {open ? "✕" : "☰"}
           </button>
         </div>
 
-        {/* Mobile menu */}
+
         {open && (
           <div style={{ background:"#fff", borderTop:`1px solid ${G[100]}`, padding:"8px 0 12px" }}>
             {NAV_LINKS.map(({ to, label }) => (

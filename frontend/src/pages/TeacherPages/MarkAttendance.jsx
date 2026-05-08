@@ -227,7 +227,7 @@ export default function MarkAttendance() {
   const [loadingHist,     setLoadingHist]     = useState(false)
   const [loadingDetail,   setLoadingDetail]   = useState(false)
   const [qrModalOpen,     setQrModalOpen]     = useState(false)
-  const [qrVisible,       setQrVisible]       = useState(true)   // ← NEW
+  const [qrVisible,       setQrVisible]       = useState(true)   
 
   const pollRef    = useRef(null)
   const sessionRef = useRef(null)
@@ -267,7 +267,7 @@ export default function MarkAttendance() {
     setSessions([]); setSessionDetail(null)
     setTab("attend")
     setQrModalOpen(false)
-    setQrVisible(true)   // ← RESET
+    setQrVisible(true)   
   }
 
   const stopAllIntervals = () => {
@@ -339,7 +339,7 @@ export default function MarkAttendance() {
       setCounter(SESSION_DURATION)
       setQrCounter(QR_INTERVAL)
       setPresentIds([])
-      setQrVisible(true)   // ← RESET on new session
+      setQrVisible(true)   
       startSessionTimer()
       startQrRotation(sid)
       startQrBadge()
@@ -411,7 +411,6 @@ export default function MarkAttendance() {
         .qr-hover { transition: transform 0.15s, box-shadow 0.15s; }
       `}</style>
 
-      {/* QR Fullscreen Modal */}
       {qrModalOpen && qrValue && (
         <QRModal value={qrValue} qrCounter={qrCounter} onClose={() => setQrModalOpen(false)} />
       )}
@@ -419,7 +418,7 @@ export default function MarkAttendance() {
       <div style={{ minHeight: "100vh", background: G[50], fontFamily: "'DM Sans',sans-serif" }}>
         <TeacherNav />
 
-        {/* Header */}
+
         <div style={{
           position: "relative",
           background: `linear-gradient(135deg,${G[900]} 0%,${G[700]} 50%,${G[500]} 100%)`,
@@ -442,7 +441,6 @@ export default function MarkAttendance() {
 
         <div style={{ maxWidth: 900, margin: "0 auto", padding: "28px 20px 60px" }}>
 
-          {/* Class selector */}
           <div style={{ ...card, padding: "20px 22px", marginBottom: 18, animation: "fadeUp 0.45s ease both" }}>
             <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: G[600], textTransform: "uppercase", letterSpacing: "1.2px", marginBottom: 10 }}>Select Class</label>
             {loadingAssign ? (
@@ -502,11 +500,11 @@ export default function MarkAttendance() {
               {(isActive || (sessionId && !submitMsg)) && (
                 <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1.6fr)", gap: 18, animation: "fadeUp 0.4s ease both", alignItems: "start" }}>
 
-                  {/* QR Panel */}
+
                   <div style={{ ...card, marginBottom: 0, textAlign: "center" }}>
                     <Heading label="QR Code" />
 
-                    {/* Session timer ring */}
+
                     <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 16, marginBottom: 18 }}>
                       <svg width="52" height="52" viewBox="0 0 60 60" style={{ transform: "rotate(-90deg)", flexShrink: 0 }}>
                         <circle cx="30" cy="30" r="25" fill="none" stroke={G[100]} strokeWidth="4" />
@@ -522,7 +520,7 @@ export default function MarkAttendance() {
                       </div>
                     </div>
 
-                    {/* ── QR visible/hidden toggle ── */}
+
                     {isActive && qrValue && (
                       <>
                         {/* Toggle button */}
@@ -558,7 +556,7 @@ export default function MarkAttendance() {
                           </button>
                         </div>
 
-                        {/* Clickable QR (conditionally shown) */}
+
                         {qrVisible && (
                           <div
                             onClick={() => setQrModalOpen(true)}
@@ -573,7 +571,6 @@ export default function MarkAttendance() {
                               <QRCodeCanvas value={qrValue} size={180} key={qrValue} />
                             </div>
 
-                            {/* Refresh countdown badge */}
                             <div style={{
                               position: "absolute", top: -10, right: -10,
                               background: qrCounter <= 2 ? "#dc2626" : G[700],
@@ -586,7 +583,6 @@ export default function MarkAttendance() {
                               <span style={{ fontSize: 7, opacity: 0.85 }}>sec</span>
                             </div>
 
-                            {/* Expand hint */}
                             <div style={{
                               position: "absolute", bottom: -10, left: "50%", transform: "translateX(-50%)",
                               background: G[700], color: "#fff", borderRadius: 999,
@@ -596,7 +592,7 @@ export default function MarkAttendance() {
                           </div>
                         )}
 
-                        {/* Placeholder when hidden */}
+
                         {!qrVisible && (
                           <div style={{
                             display: "inline-flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
@@ -639,11 +635,11 @@ export default function MarkAttendance() {
                     </div>
                   </div>
 
-                  {/* Right column: LiveFeed + Student List */}
+
                   <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
                     <LiveFeed presentIds={presentIds} students={students} />
 
-                    {/* Student List Panel */}
+
                     <div style={{ ...card, marginBottom: 0 }}>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
                         <Heading label="Student List" />
@@ -724,7 +720,6 @@ export default function MarkAttendance() {
             </>
           )}
 
-          {/* History Tab */}
           {assignmentId && tab === "history" && (
             <div style={{ ...card, animation: "fadeUp 0.4s ease both" }}>
               <Heading label="Attendance History" />

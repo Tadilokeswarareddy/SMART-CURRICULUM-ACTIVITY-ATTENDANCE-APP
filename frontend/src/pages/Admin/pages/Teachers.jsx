@@ -34,7 +34,7 @@ const Teachers = ({ data, reload, toast }) => {
           if (!form.username?.trim() || !form.password?.trim()) {
             toast("Username and password are required"); return
           }
-          // Step 1: create user
+
           const res = await api.post("/api/register/", {
             username: form.username,
             password: form.password,
@@ -43,7 +43,7 @@ const Teachers = ({ data, reload, toast }) => {
             email: form.email || "",
             role: "teacher",
           })
-          // Step 2: create teacher profile
+
           await api.post("/api/teacher/", {
             user_id: res.data.id,
             phone_number: form.phone_number || "",
@@ -175,7 +175,7 @@ const Teachers = ({ data, reload, toast }) => {
             </Field>
           )}
 
-          {/* Profile fields for all modes */}
+
           <div style={s.formRow}>
             <Field label="Employee ID">
               <Input value={form.employee_id || ""} onChange={v => setForm(f => ({ ...f, employee_id: v }))}  />

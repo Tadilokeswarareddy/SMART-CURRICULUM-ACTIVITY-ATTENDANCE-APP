@@ -44,7 +44,6 @@ const TeacherTimetable = () => {
       <div style={{ minHeight:"100vh", background:G[50], fontFamily:"'DM Sans',sans-serif" }}>
         <TeacherNav />
 
-        {/* Banner */}
         <div style={{
           position:"relative",
           background:`linear-gradient(135deg,${G[900]} 0%,${G[700]} 50%,${G[500]} 100%)`,

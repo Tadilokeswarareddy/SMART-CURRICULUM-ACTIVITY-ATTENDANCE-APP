@@ -1,4 +1,3 @@
-
 import React from "react"
 
 const G = {
@@ -12,7 +11,6 @@ const AttendanceIndividual = ({ subject, presentClasses, totalClasses, teacherNa
   const dashArray = 100
   const dashOffset = dashArray - (percentage / 100) * dashArray
   const absentClasses = totalClasses - presentClasses
-
   const ringColor = percentage >= 75 ? G[500] : percentage >= 50 ? "#f59e0b" : "#ef4444"
 
   return (

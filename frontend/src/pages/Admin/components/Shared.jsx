@@ -1,13 +1,9 @@
-// src/pages/admin/components/Shared.jsx
-// ─── Shared design tokens, icons, and UI primitives ───────────────────────────
-
 export const G = {
   50:  "#f0fdf4", 100: "#dcfce7", 200: "#bbf7d0", 300: "#86efac",
   400: "#4ade80", 500: "#22c55e", 600: "#16a34a", 700: "#15803d",
   800: "#166534", 900: "#14532d",
 }
 
-// ── SVG Icons ──────────────────────────────────────────────────────────────────
 export const Icon = ({ name, size = 16 }) => {
   const icons = {
     dashboard:   <><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></>,
@@ -36,7 +32,6 @@ export const Icon = ({ name, size = 16 }) => {
   )
 }
 
-// ── Shared styles ──────────────────────────────────────────────────────────────
 export const s = {
   header:     { background: "#fff", borderBottom: `1px solid ${G[100]}`, padding: "0 28px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 100, boxShadow: `0 1px 0 ${G[100]}` },
   logo:       { fontSize: 21, fontWeight: 700, color: G[700], fontFamily: "'DM Serif Display',serif", letterSpacing: "-0.3px" },
@@ -64,12 +59,12 @@ export const s = {
   spinArc:    { position: "absolute", inset: -3, borderRadius: "50%", border: "3px solid transparent", borderTopColor: G[500], animation: "spin 0.7s linear infinite" },
 }
 
-// ── Toast ──────────────────────────────────────────────────────────────────────
+
 export const Toast = ({ msg }) => msg ? (
   <div style={s.toast}><Icon name="check" size={13} />{msg}</div>
 ) : null
 
-// ── Spinner ────────────────────────────────────────────────────────────────────
+
 export const Spinner = () => (
   <>
     <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
@@ -80,7 +75,6 @@ export const Spinner = () => (
   </>
 )
 
-// ── Typography ─────────────────────────────────────────────────────────────────
 export const PageTitle = ({ title, sub }) => (
   <div style={{ marginBottom: 24 }}>
     <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: G[900], fontFamily: "'DM Serif Display',serif", letterSpacing: "-0.3px" }}>{title}</h1>
@@ -105,7 +99,6 @@ export const CardHeader = ({ label, count, children }) => (
   </div>
 )
 
-// ── Form Primitives ────────────────────────────────────────────────────────────
 export const Field = ({ label, children }) => (
   <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
     <label style={s.fieldLabel}>{label}</label>
@@ -141,7 +134,6 @@ export const Textarea = ({ value, onChange, placeholder }) => (
   />
 )
 
-// ── Display Primitives ─────────────────────────────────────────────────────────
 export const Badge = ({ children, color = "green" }) => {
   const c = { green: [G[100], G[700]], blue: ["#dbeafe","#1d4ed8"], orange: ["#fed7aa","#c2410c"], gray: ["#f3f4f6","#374151"], red: ["#fee2e2","#dc2626"] }[color] || [G[100], G[700]]
   return <span style={{ background: c[0], color: c[1], borderRadius: 6, padding: "3px 9px", fontSize: 11, fontWeight: 700, display: "inline-block" }}>{children}</span>
@@ -156,7 +148,6 @@ export const Avatar = ({ name, color = "green" }) => {
   )
 }
 
-// ── Modal ──────────────────────────────────────────────────────────────────────
 export const Modal = ({ title, onClose, onSave, children }) => (
   <div style={s.overlay} onClick={e => e.target === e.currentTarget && onClose()}>
     <div style={s.modal}>
@@ -173,7 +164,7 @@ export const Modal = ({ title, onClose, onSave, children }) => (
   </div>
 )
 
-// ── Table Primitives ───────────────────────────────────────────────────────────
+
 export const Th = ({ children }) => <th style={s.th}>{children}</th>
 
 export const Td = ({ children, muted }) => (
@@ -195,7 +186,7 @@ export const TableWrap = ({ cols, children }) => (
   </div>
 )
 
-// ── Search & Buttons ───────────────────────────────────────────────────────────
+
 export const SearchBar = ({ value, onChange, placeholder = "Search…" }) => (
   <div style={{ position: "relative" }}>
     <div style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: G[400], pointerEvents: "none" }}>
@@ -212,6 +203,6 @@ export const SearchBar = ({ value, onChange, placeholder = "Search…" }) => (
 
 export const BtnRow = ({ children }) => <div style={{ display: "flex", gap: 8 }}>{children}</div>
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
+
 export const sectionLabel = sec =>
   typeof sec === "object" ? `${sec?.branch?.name}-${sec?.year?.year}-${sec?.name}` : sec || "—"

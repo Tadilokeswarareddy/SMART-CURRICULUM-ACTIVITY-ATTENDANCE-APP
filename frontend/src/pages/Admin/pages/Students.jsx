@@ -9,8 +9,6 @@ const Students = ({ data, reload, toast }) => {
   const [modal, setModal] = useState(null)
   const [form, setForm]   = useState({})
   const [search, setSearch] = useState("")
-
-  // users who don't yet have a student profile
   const usersWithoutProfile = (data.users || []).filter(u =>
     u.role === 'student' && !(data.students || []).find(st => st.user === u.id)
   )
@@ -28,7 +26,6 @@ const Students = ({ data, reload, toast }) => {
     try {
       if (modal === "add") {
         if (form.mode === "register") {
-          // Step 1: create user account
           if (!form.username?.trim() || !form.password?.trim()) {
             toast("Username and password are required"); return
           }
@@ -40,7 +37,6 @@ const Students = ({ data, reload, toast }) => {
             email: form.email || "",
             role: "student",
           })
-          // Step 2: create student profile linked to new user
           await api.post("/api/students/", {
             user: res.data.id,
             roll_number: form.roll_number || "",
@@ -49,7 +45,6 @@ const Students = ({ data, reload, toast }) => {
           })
           toast("Student account and profile created")
         } else {
-          // Link existing user to a new student profile
           if (!form.user_id) { toast("Please select a user"); return }
           await api.post("/api/students/", {
             user: form.user_id,
@@ -60,7 +55,6 @@ const Students = ({ data, reload, toast }) => {
           toast("Student profile created")
         }
       } else {
-        // Edit existing student profile
         await api.patch(`/api/students/${form.id}/`, {
           roll_number: form.roll_number || "",
           phone_number: form.phone_number || "",
@@ -173,7 +167,6 @@ const Students = ({ data, reload, toast }) => {
             </Field>
           )}
 
-          {/* Profile fields shown for both add modes and edit */}
           <div style={s.formRow}>
             <Field label="Roll Number">
               <Input value={form.roll_number || ""} onChange={v => setForm(f => ({ ...f, roll_number: v }))}  />

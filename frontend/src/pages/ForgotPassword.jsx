@@ -55,7 +55,7 @@ const ForgotPassword = () => {
             className="fp-btn"
             style={{ width:"100%", background:G[700], color:"#fff", border:"none", borderRadius:12, padding:"13px", fontSize:14, fontWeight:600, cursor:"pointer", transition:"background 0.2s" }}
           >
-            ← Back to Login
+             Back to Login
           </button>
         </div>
       </div>

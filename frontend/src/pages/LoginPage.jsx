@@ -101,7 +101,7 @@ const LoginPage = () => {
                 </div>
 
                 {error && (
-                  <p style={{ margin:0, fontSize:12, color:"#dc2626", fontFamily:"'DM Sans',sans-serif" }}>⚠️ {error}</p>
+                  <p style={{ margin:0, fontSize:12, color:"#dc2626", fontFamily:"'DM Sans',sans-serif" }}> {error}</p>
                 )}
 
                 <div style={{ textAlign:"right" }}>

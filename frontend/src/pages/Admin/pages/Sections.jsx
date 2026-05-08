@@ -22,8 +22,8 @@ const Sections = ({ data, reload, toast }) => {
     }
     try {
       const payload = {
-        branch_id: form.branch_id,   // ← was 'branch'
-        year_id: form.year_id,       // ← was 'year'
+        branch_id: form.branch_id,   
+        year_id: form.year_id,       
         name: form.name
       }
       modal === "edit"

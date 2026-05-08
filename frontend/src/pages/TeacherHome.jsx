@@ -345,7 +345,7 @@ const TeacherHome = () => {
               </div>
             )}
 
-            {/* Legend */}
+  
             {students.length > 0 && !statsLoading && (
               <div style={{ display:"flex", flexWrap:"wrap", gap:20, marginTop:16, paddingTop:16, borderTop:`1px solid ${G[100]}` }}>
                 {[

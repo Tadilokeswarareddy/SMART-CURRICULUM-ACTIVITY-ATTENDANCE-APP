@@ -20,7 +20,6 @@ const SmartTask = ({ onStatsRefresh }) => {
   const [geminiWarn, setGeminiWarn]       = useState({});        
   const [submissions, setSubmissions]     = useState({});        
 
-  // Fetch subjects with active prompts
   useEffect(() => {
     fetch(`${API}/api/task/section-task/active/`, {
       headers: { Authorization: `Bearer ${token()}` },
@@ -141,7 +140,6 @@ const SmartTask = ({ onStatsRefresh }) => {
 
         <div style={{ maxWidth:820, margin:"0 auto", padding:"32px 24px 56px" }}>
 
-          {/* Subject Tabs */}
           {subjectsLoading ? (
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:28 }}>
               <div style={{ width:18,height:18,borderRadius:"50%",border:`3px solid ${G[200]}`,borderTop:`3px solid ${G[500]}`,animation:"spin 0.75s linear infinite" }}/>
@@ -153,7 +151,7 @@ const SmartTask = ({ onStatsRefresh }) => {
             </div>
           ) : (
             <>
-              {/* Tab row */}
+
               <div style={{ display:"flex", flexWrap:"wrap", gap:10, marginBottom:28, animation:"fadeUp 0.4s ease both" }}>
                 {subjects.map(s => {
                   const active = activeSubject === s.subject_id
@@ -175,10 +173,10 @@ const SmartTask = ({ onStatsRefresh }) => {
                 })}
               </div>
 
-              {/* Gemini warning */}
+
               {hasWarn && (
                 <div style={{ background:"#fffbeb",border:"1.5px solid #fde68a",borderRadius:12,padding:"14px 18px",marginBottom:24,display:"flex",alignItems:"flex-start",gap:12 }}>
-                  <span style={{ fontSize:18,flexShrink:0,marginTop:1 }}>⚠️</span>
+                  <span style={{ fontSize:18,flexShrink:0,marginTop:1 }}></span>
                   <div>
                     <p style={{ margin:"0 0 2px",fontSize:14,fontWeight:700,color:"#92400e" }}>Gemini is not responding</p>
                     <p style={{ margin:0,fontSize:13,color:"#b45309",lineHeight:1.5 }}>These are default tasks. Your work will still be graded normally once Gemini comes back online.</p>
@@ -186,12 +184,12 @@ const SmartTask = ({ onStatsRefresh }) => {
                 </div>
               )}
 
-              {/* Error */}
+
               {error && (
                 <div style={{ background:"#fef2f2",border:"1.5px solid #fecaca",color:"#dc2626",borderRadius:12,padding:"14px 18px",marginBottom:24,fontSize:14 }}>{error}</div>
               )}
 
-              {/* Loading spinner */}
+   
               {isLoading && (
                 <div style={{ display:"flex",flexDirection:"column",alignItems:"center",padding:"40px 0" }}>
                   <div style={{ width:44,height:44,borderRadius:"50%",border:`4px solid ${G[200]}`,position:"relative" }}>
@@ -201,7 +199,7 @@ const SmartTask = ({ onStatsRefresh }) => {
                 </div>
               )}
 
-              {/* Generate button (before first fetch) */}
+
               {!isLoading && !hasGenerated && (
                 <div style={{ background:"#fff",borderRadius:18,boxShadow:`0 2px 16px rgba(0,0,0,0.07),0 0 0 1px ${G[100]}`,padding:"56px 28px",textAlign:"center",animation:"fadeUp 0.5s ease both" }}>
                   <div style={{ width:64,height:64,borderRadius:"50%",background:G[100],display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 20px",border:`2px solid ${G[200]}` }}>
@@ -220,10 +218,9 @@ const SmartTask = ({ onStatsRefresh }) => {
                 </div>
               )}
 
-              {/* Task cards */}
               {!isLoading && hasGenerated && activeTasks.length === 0 && (
                 <div style={{ background:"#fff",borderRadius:18,padding:"40px 28px",textAlign:"center",boxShadow:`0 2px 16px rgba(0,0,0,0.07),0 0 0 1px ${G[100]}` }}>
-                  <p style={{ color:"#9ca3af", fontSize:14, margin:0 }}>All tasks completed for this subject! 🎉</p>
+                  <p style={{ color:"#9ca3af", fontSize:14, margin:0 }}>All tasks completed for this subject!</p>
                 </div>
               )}
 
