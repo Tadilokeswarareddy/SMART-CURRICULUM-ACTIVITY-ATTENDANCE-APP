@@ -1,7 +1,7 @@
 import json, re, base64, random, requests
 from django.conf import settings
 
-MODEL_ID   = "gemini-2.5-flash"
+MODEL_ID   = "gemini-1.5-flash"
 API_URL    = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL_ID}:generateContent?key={settings.GEMINI_API_KEY}"
 REVIEW_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL_ID}:generateContent?key={settings.GEMINI_API_KEY}"
 
